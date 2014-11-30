@@ -13,7 +13,7 @@ module.exports = function(nforce, name) {
    * @param {string} author - The author of the book.
    */
   function foo(title, author) {
-    
+
   }
   plugin.fn('deploy', function(data, cb) {
     var opts = this._getOpts(data);
@@ -95,4 +95,4 @@ module.exports = function(nforce, name) {
 
   });
 
-}
+};
