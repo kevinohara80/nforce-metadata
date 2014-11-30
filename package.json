@@ -25,7 +25,6 @@
     "url": "https://github.com/kevinohara80/nforce-metadata/issues"
   },
   "homepage": "https://github.com/kevinohara80/nforce-metadata",
-  "dependences": {},
   "peerDependencies": {
     "nforce": ">= 0.10.0"
   },
@@ -33,5 +32,9 @@
     "mocha": "^2.0.1",
     "nforce": ">= 0.10.0",
     "should": "^4.3.0"
+  },
+  "dependencies": {
+    "lodash": "^2.4.1",
+    "soap": "^0.6.0"
   }
 }
