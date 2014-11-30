@@ -1,0 +1,28 @@
+{
+  "name": "nforce-metadata",
+  "version": "1.0.0",
+  "description": "An nforce plugin that facilitates working with the metadata api",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kevinohara80/nforce-metadata.git"
+  },
+  "keywords": [
+    "nforce",
+    "nforce-plugin",
+    "metadata",
+    "api",
+    "salesforce",
+    "force.com",
+    "forcedotcom"
+  ],
+  "author": "Kevin O'Hara",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/kevinohara80/nforce-metadata/issues"
+  },
+  "homepage": "https://github.com/kevinohara80/nforce-metadata"
+}
