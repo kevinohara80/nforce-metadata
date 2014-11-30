@@ -1,1 +1,3 @@
 -G --require should
+--reporter spec
+--growl
