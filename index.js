@@ -115,6 +115,7 @@ module.exports = function(nforce, name) {
     var resolver = createResolver(opts.callback);
 
     if(this.soapClient) {
+      this.soapClient.setOAuth(opts.oauth);
       resolver.resolve(this.soapClient);
     } else {
       soap.createClient(opts.oauth, function(err, client) {
@@ -129,7 +130,7 @@ module.exports = function(nforce, name) {
 
   plugin.fn('_apiRequest', function(data, cb) {
     var opts = this._getOpts(data);
-    var resolver = createResolver(opts.callback);
+    var resolver = opts._resolver || createResolver(opts.callback);
 
     this.meta._getSoapClient(opts).then(function(client) {
       client.MetadataService.Metadata[opts.method](opts.data, function(err, res) {
