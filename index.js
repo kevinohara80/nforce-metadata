@@ -129,13 +129,34 @@ module.exports = function(nforce, name) {
   });
 
   plugin.fn('_apiRequest', function(data, cb) {
-    var opts = this._getOpts(data);
+    var self     = this;
+    var opts     = this._getOpts(data);
     var resolver = opts._resolver || createResolver(opts.callback);
 
     this.meta._getSoapClient(opts).then(function(client) {
       client.MetadataService.Metadata[opts.method](opts.data, function(err, res) {
-        if(err) return resolver.reject(err);
-        else return resolver.resolve(res.result);
+        if(err) {
+          if(/INVALID\_SESSION\_ID/.test(err.message) &&
+          self.autoRefresh === true &&
+          (opts.oauth.refresh_token || (self.getUsername() && self.getPassword())) &&
+          !opts._retryCount) {
+
+            self.autoRefreshToken.call(self, opts, function(err2, res2) {
+              if(err2) {
+                return resolver.reject(err2);
+              } else {
+                opts._retryCount = 1;
+                opts._resolver = resolver;
+                return self.meta._apiRequest.call(self, opts);
+              }
+            });
+
+          } else {
+            resolver.reject(err);
+          }
+        } else {
+          return resolver.resolve(res.result);
+        }
       });
     }).error(function(err) {
       resolver.reject(err);
