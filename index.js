@@ -1,4 +1,5 @@
-var soap = require('./lib/soap-client');
+var stream = require('stream');
+var soap   = require('./lib/soap-client');
 
 module.exports = function(nforce, name) {
   // throws if the plugin already exists
@@ -25,11 +26,65 @@ module.exports = function(nforce, name) {
   /* deploy api calls */
 
   plugin.fn('deploy', function(data, cb) {
-    var opts = this._getOpts(data);
+    var self     = this;
+    var opts     = this._getOpts(data, cb);
+    var resolver = createResolver(opts.callback);
+
+    opts.method = 'deploy';
+
+    function doDeploy(zipInput) {
+
+      opts.data = {
+        'ZipFile': zipInput,
+        'DeployOptions': opts.deployOptions || opts.options || {}
+      };
+
+      console.log(opts.data);
+
+      opts._resolver = resolver;
+
+      self.meta._apiRequest(data, function(err, res) {
+        if(err) return resolver.reject(err);
+        else return resolver.resolve(null, res);
+      });
+
+    }
+
+    if(opts.zipFile instanceof stream.Stream) {
+      this.meta._log('is a zip stream');
+      var bufs = [];
+      opts.zipFile.on('data', function(d) {
+        bufs.push(d);
+      });
+      opts.zipFile.on('end', function() {
+        self.meta._log('zip stream end');
+        doDeploy(Buffer.concat(bufs).toString('base64'));
+      });
+      opts.zipFile.resume();
+    } else if (opts.zipFile instanceof Buffer) {
+      this.meta._log('is a buffer');
+      doDeploy(opts.zipFile.toString('base64'));
+    } else if (opts.zipFile instanceof String || typeof opts.zipFile === 'string') {
+      this.meta._log('is a string');
+      doDeploy(opts.zipFile);
+    } else {
+      throw new Error('invalid zipFile');
+    }
+
+    return resolver.promise;
   });
 
   plugin.fn('checkDeployStatus', function(data, cb) {
     var opts = this._getOpts(data);
+
+    opts.data = {
+      asyncProcessId: opts.asyncProcessId || opts.id,
+      includeDetails: opts.includeDetails
+    }
+
+    opts.method = 'checkDeployStatus';
+
+    return this.meta._apiRequest(opts, opts.callback);
   });
 
   plugin.fn('cancelDeploy', function(data, cb) {
@@ -130,7 +185,7 @@ module.exports = function(nforce, name) {
 
   plugin.fn('_apiRequest', function(data, cb) {
     var self     = this;
-    var opts     = this._getOpts(data);
+    var opts     = this._getOpts(data, cb);
     var resolver = opts._resolver || createResolver(opts.callback);
 
     this.meta._getSoapClient(opts).then(function(client) {
@@ -163,6 +218,20 @@ module.exports = function(nforce, name) {
     });
 
     return resolver.promise;
+  });
+
+  /* logger methods */
+
+  plugin.fn('_log', function(msg) {
+    if(this.debug === true) {
+      console.log('[meta][log]: ' + msg);
+    }
+  });
+
+  plugin.fn('_logErr', function(msg) {
+    if(this.debug === true) {
+      console.log('[meta][err]: ' + msg);
+    }
   });
 
 };

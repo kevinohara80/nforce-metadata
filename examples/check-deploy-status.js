@@ -15,9 +15,12 @@ var org = nforce.createConnection({
 });
 
 org.authenticate().then(function(){
-  return org.meta.describeApi();
-}).then(function(desc) {
-  console.log(util.inspect(desc.MetadataService.Metadata.checkDeployStatus, { depth: 2 }));
+  return org.meta.checkDeployStatus({
+    asyncProcessId: '0Afd0000001jTaQCAU',
+    includeDetails: true
+  });
+}).then(function(res) {
+  console.dir(res.status);
 }).error(function(err) {
   console.error(err);
 });

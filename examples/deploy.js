@@ -1,6 +1,8 @@
-var nforce = require('nforce');
-var _      = require('lodash');
-var util   = require('util');
+var nforce   = require('nforce');
+var _        = require('lodash');
+var util     = require('util');
+var archiver = require('archiver');
+var fs       = require('fs');
 
 require('../')(nforce);
 
@@ -11,13 +13,21 @@ var org = nforce.createConnection({
   mode: 'single',
   username: process.env.SFUSER,
   password: process.env.SFPASS,
-  plugins: ['meta']
+  plugins: ['meta'],
+  debug: true
 });
 
 org.authenticate().then(function(){
-  return org.meta.describeApi();
-}).then(function(desc) {
-  console.log(util.inspect(desc.MetadataService.Metadata.checkDeployStatus, { depth: 2 }));
+  var archive = archiver('zip');
+
+  var promise = org.meta.deploy({ zipFile: archive });
+
+  archive.directory('examples/src', 'src').finalize();
+
+  return promise;
+
+}).then(function(resp) {
+  console.log(resp);
 }).error(function(err) {
   console.error(err);
 });
