@@ -1,3 +1,5 @@
+/*jshint -W030 */
+
 var _      = require('lodash');
 var nforce = require('nforce');
 var should = require('should');

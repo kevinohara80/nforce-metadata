@@ -1,5 +1,7 @@
-var stream = require('stream');
-var soap   = require('./lib/soap-client');
+var stream  = require('stream');
+var soap    = require('./lib/soap-client');
+var Poller  = require('./lib/poller');
+var Promise = require('bluebird');
 
 module.exports = function(nforce, name) {
   // throws if the plugin already exists
@@ -39,8 +41,6 @@ module.exports = function(nforce, name) {
         'DeployOptions': opts.deployOptions || opts.options || {}
       };
 
-      console.log(opts.data);
-
       opts._resolver = resolver;
 
       self.meta._apiRequest(data, function(err, res) {
@@ -74,17 +74,69 @@ module.exports = function(nforce, name) {
     return resolver.promise;
   });
 
-  plugin.fn('checkDeployStatus', function(data, cb) {
+  plugin.fn('deployAndPoll', function(data, cb) {
+    var self = this;
     var opts = this._getOpts(data);
+    var resolver = createResolver(opts.callback);
+
+    resolver.promise = resolver.promise || {};
+
+    var poller = resolver.promise.poller = Poller.create({
+      interval: self.metaOpts.pollInterval || 2000
+    });
+
+    opts.data = {
+      'ZipFile': opts.zipFile,
+      'DeployOptions': opts.deployOptions || opts.options || {}
+    };
+
+    this.meta.deploy(opts).then(function(res) {
+      poller.opts.poll = function(cb) {
+        self.meta.checkDeployStatus({
+          id: res.id,
+          includeDeleted: opts.includeDeleted
+        }, function(err, res) {
+          if(err) cb(err);
+          else cb(null, res)
+        });
+      };
+
+      poller.on('done', resolver.resolve);
+      poller.on('error', resolver.reject);
+    });
+
+    return resolver.promise;
+  });
+
+  plugin.fn('checkDeployStatus', function(data, cb) {
+    var opts = this._getOpts(data, cb);
 
     opts.data = {
       asyncProcessId: opts.asyncProcessId || opts.id,
       includeDetails: opts.includeDetails
-    }
+    };
 
     opts.method = 'checkDeployStatus';
-
     return this.meta._apiRequest(opts, opts.callback);
+  });
+
+  plugin.fn('pollDeployStatus', function(data) {
+    var self = this;
+    var opts = this._getOpts(data);
+
+    opts.asyncProcessId = opts.asyncProcessId || opts.id;
+
+    var poller = Poller.create({
+      interval: (self.metaOpts) ? self.metaOpts.pollInterval : 2000,
+      poll: function(cb) {
+        self.meta.checkDeployStatus(opts, function(err, res) {
+          if(err) cb(err);
+          else cb(null, res)
+        });
+      }
+    });
+
+    return poller.start();
   });
 
   plugin.fn('cancelDeploy', function(data, cb) {
@@ -192,9 +244,9 @@ module.exports = function(nforce, name) {
       client.MetadataService.Metadata[opts.method](opts.data, function(err, res) {
         if(err) {
           if(/INVALID\_SESSION\_ID/.test(err.message) &&
-          self.autoRefresh === true &&
-          (opts.oauth.refresh_token || (self.getUsername() && self.getPassword())) &&
-          !opts._retryCount) {
+            self.autoRefresh === true &&
+            (opts.oauth.refresh_token || (self.getUsername() && self.getPassword())) &&
+            !opts._retryCount) {
 
             self.autoRefreshToken.call(self, opts, function(err2, res2) {
               if(err2) {

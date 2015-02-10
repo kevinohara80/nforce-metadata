@@ -2,6 +2,7 @@ var nforce   = require('nforce');
 var _        = require('lodash');
 var util     = require('util');
 var archiver = require('archiver');
+var Promise  = require('bluebird');
 
 require('../')(nforce);
 
@@ -13,20 +14,31 @@ var org = nforce.createConnection({
   username: process.env.SFUSER,
   password: process.env.SFPASS,
   plugins: ['meta'],
-  debug: true
+  metaOpts: {
+    pollInterval: 1000
+  }
 });
 
 org.authenticate().then(function(){
   var archive = archiver('zip');
-
   var promise = org.meta.deploy({ zipFile: archive });
 
   archive.directory('examples/src', 'src').finalize();
 
   return promise;
+}).then(function(res) {
+  return new Promise(function(resolve, reject) {
+    var poller = org.meta.pollDeployStatus({ id: res.id, includeDetails: true });
 
-}).then(function(resp) {
-  console.log(resp);
+    poller.on('poll', function(res) {
+      console.log('poll: ' + res.status);
+    });
+
+    poller.on('done', resolve);
+    poller.on('error', reject);
+  });
+}).then(function(res){
+  console.log('done: ' + res.status);
 }).error(function(err) {
   console.error(err);
 });

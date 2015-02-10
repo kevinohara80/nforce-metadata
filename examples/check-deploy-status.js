@@ -11,7 +11,10 @@ var org = nforce.createConnection({
   mode: 'single',
   username: process.env.SFUSER,
   password: process.env.SFPASS,
-  plugins: ['meta']
+  plugins: ['meta'],
+  metaOpts: {
+    pollInterval: 5000
+  }
 });
 
 org.authenticate().then(function(){

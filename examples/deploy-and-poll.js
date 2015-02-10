@@ -13,20 +13,21 @@ var org = nforce.createConnection({
   username: process.env.SFUSER,
   password: process.env.SFPASS,
   plugins: ['meta'],
-  debug: true
+  metaOpts: {
+    pollInterval: 5000
+  }
 });
 
 org.authenticate().then(function(){
   var archive = archiver('zip');
 
-  var promise = org.meta.deploy({ zipFile: archive });
+  var promise = org.meta.deployAndPoll({ zipFile: archive });
 
   archive.directory('examples/src', 'src').finalize();
 
   return promise;
-
-}).then(function(resp) {
-  console.log(resp);
+}).then(function(res) {
+  console.dir(res.status);
 }).error(function(err) {
   console.error(err);
 });
