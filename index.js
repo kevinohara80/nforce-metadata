@@ -1,7 +1,10 @@
-var stream  = require('stream');
-var soap    = require('./lib/soap-client');
-var Poller  = require('./lib/poller');
-var Promise = require('bluebird');
+var stream      = require('stream');
+var soapClient  = require('./lib/soap-client');
+var Poller      = require('./lib/poller');
+var Promise     = require('bluebird');
+var request     = require('request');
+var soap        = require('./lib/soap');
+var parseString = require('xml2js').parseString;
 
 module.exports = function(nforce, name) {
   // throws if the plugin already exists
@@ -86,8 +89,8 @@ module.exports = function(nforce, name) {
     });
 
     opts.data = {
-      'ZipFile': opts.zipFile,
-      'DeployOptions': opts.deployOptions || opts.options || {}
+      ZipFile: opts.zipFile,
+      DeployOptions: opts.deployOptions || opts.options || {}
     };
 
     this.meta.deploy(opts).then(function(res) {
@@ -97,13 +100,15 @@ module.exports = function(nforce, name) {
           includeDeleted: opts.includeDeleted
         }, function(err, res) {
           if(err) cb(err);
-          else cb(null, res)
+          else cb(null, res);
         });
       };
 
       poller.on('done', resolver.resolve);
       poller.on('error', resolver.reject);
-    });
+
+      poller.start();
+    }).error(resolver.reject);
 
     return resolver.promise;
   });
@@ -120,37 +125,86 @@ module.exports = function(nforce, name) {
     return this.meta._apiRequest(opts, opts.callback);
   });
 
-  plugin.fn('pollDeployStatus', function(data) {
-    var self = this;
-    var opts = this._getOpts(data);
-
-    opts.asyncProcessId = opts.asyncProcessId || opts.id;
-
-    var poller = Poller.create({
-      interval: (self.metaOpts) ? self.metaOpts.pollInterval : 2000,
-      poll: function(cb) {
-        self.meta.checkDeployStatus(opts, function(err, res) {
-          if(err) cb(err);
-          else cb(null, res)
-        });
-      }
-    });
-
-    return poller.start();
-  });
-
   plugin.fn('cancelDeploy', function(data, cb) {
     var opts = this._getOpts(data);
+
+    opts.data = {
+      id: opts.id
+    };
+
+    opts.method = 'cancelDeploy';
+
+    return this.meta._apiRequest(opts, opts.callback);
   });
 
   /* retrieve api calls */
 
   plugin.fn('retrieve', function(data, cb) {
     var opts = this._getOpts(data);
+
+    opts.data = {
+      apiVersion:    opts.apiVersion,
+      packageNames:  opts.packageNames,
+      singlePackage: opts.singlePackage,
+      specificFiles: opts.specificFiles,
+      unpackaged:    opts.unpackaged
+    };
+
+    opts.method = 'retrieve';
+
+    return this.meta._apiRequest(opts, opts.callback);
   });
+
+  plugin.fn('retrieveAndPoll', function(data, cb) {
+    var self = this;
+    var opts = this._getOpts(data);
+    var resolver = createResolver(opts.callback);
+
+    resolver.promise = resolver.promise || {};
+
+    var poller = resolver.promise.poller = Poller.create({
+      interval: self.metaOpts.pollInterval || 2000
+    });
+
+    opts.data = {
+      apiVersion:    opts.apiVersion,
+      packageNames:  opts.packageNames,
+      singlePackage: opts.singlePackage,
+      specificFiles: opts.specificFiles,
+      unpackaged:    opts.unpackaged
+    };
+
+    this.meta.retrieve(opts).then(function(res) {
+      poller.opts.poll = function(cb) {
+        self.meta.checkRetrieveStatus({
+          id: res.id
+        }, function(err, res) {
+          if(err) cb(err);
+          else cb(null, res);
+        });
+      };
+
+      poller.on('done', resolver.resolve);
+      poller.on('error', resolver.reject);
+
+      poller.start();
+    }).error(resolver.reject);
+
+    return resolver.promise;
+  });
+
 
   plugin.fn('checkRetrieveStatus', function(data, cb) {
     var opts = this._getOpts(data);
+
+    opts.data = {
+      id: opts.id
+    };
+
+    opts.method = 'checkRetrieveStatus';
+
+    return this.meta._apiRequest(opts, opts.callback);
+
   });
 
   /* crud-based api calls */
@@ -205,34 +259,21 @@ module.exports = function(nforce, name) {
     var opts = this._getOpts(data, cb);
 
     opts.data = {
-      queries: opts.queries,
-      asOfVersion: opts.asOfVersion
+      listMetadata: {
+        queries: opts.queries,
+        asOfVersion: opts.asOfVersion
+      }
     };
-
-    opts.method = 'listMetadata';
 
     return this.meta._apiRequest(opts, opts.callback);
   });
 
   /* low-level api calls */
 
-  plugin.fn('_getSoapClient', function(data, cb) {
-    var self     = this;
-    var opts     = this._getOpts(data, cb);
-    var resolver = createResolver(opts.callback);
-
-    if(this.soapClient) {
-      this.soapClient.setOAuth(opts.oauth);
-      resolver.resolve(this.soapClient);
-    } else {
-      soap.createClient(opts.oauth, function(err, client) {
-        if(err) return resolver.reject(err);
-        self.soapClient = client;
-        resolver.resolve(client);
-      });
-    }
-
-    return resolver.promise;
+  plugin.fn('_getEndpoint', function(oauth){
+    return oauth.instance_url +
+      '/services/Soap/m/' +
+      this.apiVersion.replace('v', '');
   });
 
   plugin.fn('_apiRequest', function(data, cb) {
@@ -240,36 +281,68 @@ module.exports = function(nforce, name) {
     var opts     = this._getOpts(data, cb);
     var resolver = opts._resolver || createResolver(opts.callback);
 
-    this.meta._getSoapClient(opts).then(function(client) {
-      client.MetadataService.Metadata[opts.method](opts.data, function(err, res) {
-        if(err) {
-          if(/INVALID\_SESSION\_ID/.test(err.message) &&
-            self.autoRefresh === true &&
-            (opts.oauth.refresh_token || (self.getUsername() && self.getPassword())) &&
-            !opts._retryCount) {
+    var endpoint = this.meta._getEndpoint(opts.oauth);
 
-            self.autoRefreshToken.call(self, opts, function(err2, res2) {
-              if(err2) {
-                return resolver.reject(err2);
-              } else {
-                opts._retryCount = 1;
-                opts._resolver = resolver;
-                return self.meta._apiRequest.call(self, opts);
-              }
-            });
+    var ropts = {
+      headers: {
+        'Content-Type': 'text/xml',
+        'SOAPAction': '""'
+      },
+      method: 'POST',
+      uri: endpoint,
+      body: soap.createMessage({
+        oauth: opts.oauth,
+        method: opts.method,
+        data: opts.data
+      })
+    };
 
-          } else {
-            resolver.reject(err);
-          }
-        } else {
-          return resolver.resolve(res.result);
-        }
+    request(ropts, function(err, res) {
+      if(err) return resolver.reject(err);
+      parseString(res.body, function (err, result) {
+        resolver.resolve(result);
       });
-    }).error(function(err) {
-      resolver.reject(err);
     });
-
     return resolver.promise;
+
+    // this.meta._getSoapClient(opts).then(function(client) {
+    //
+    //   client.on('request', function(a, b) {
+    //     console.log(a);
+    //     console.log(self.meta._getEndpoint(opts.oauth));
+    //   });
+    //
+    //   client.MetadataService.Metadata[opts.method](opts.data, function(err, res) {
+    //     if(err) {
+    //       if(/INVALID\_SESSION\_ID/.test(err.message) &&
+    //         self.autoRefresh === true &&
+    //         (opts.oauth.refresh_token || (self.getUsername() && self.getPassword())) &&
+    //         !opts._retryCount) {
+    //
+    //         self.autoRefreshToken.call(self, opts, function(err2, res2) {
+    //           if(err2) {
+    //             return resolver.reject(err2);
+    //           } else {
+    //             opts._retryCount = 1;
+    //             opts._resolver = resolver;
+    //             return self.meta._apiRequest.call(self, opts);
+    //           }
+    //         });
+    //
+    //       } else {
+    //         //console.log(client.lastRequest);
+    //         resolver.reject(err);
+    //       }
+    //     } else {
+    //       //console.log(client.lastRequest);
+    //       return resolver.resolve(res.result);
+    //     }
+    //   });
+    // }).error(function(err) {
+    //   resolver.reject(err);
+    // });
+    //
+    // return resolver.promise;
   });
 
   /* logger methods */

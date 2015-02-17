@@ -19,21 +19,15 @@ var org = nforce.createConnection({
 });
 
 org.authenticate().then(function(){
-  var archive = archiver('zip')
-    .directory('examples/src', 'src')
-    .finalize();
-
-  var promise = org.meta.deployAndPoll({
-    zipFile: archive
+  return org.meta.retrieve({
+    retrieveRequest: {
+      apiVersion: 30.0
+    }
   });
-
-  promise.poller.on('poll', function(res) {
-    console.log('poll status: ' + res.status);
-  });
-
-  return promise;
 }).then(function(res) {
-  console.log('completed: ' + res.status);
+  return org.meta.checkRetrieveStatus({ id: res.id });
+}).then(function(res) {
+  console.log(res);
 }).error(function(err) {
-  console.error(err);
+  console.error(err.message);
 });
