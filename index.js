@@ -143,11 +143,15 @@ module.exports = function(nforce, name) {
     var opts = this._getOpts(data);
 
     opts.data = {
-      apiVersion:    opts.apiVersion,
-      packageNames:  opts.packageNames,
-      singlePackage: opts.singlePackage,
-      specificFiles: opts.specificFiles,
-      unpackaged:    opts.unpackaged
+      retrieve: {
+        retrieveRequest: {
+          apiVersion:    opts.apiVersion,
+          packageNames:  opts.packageNames,
+          singlePackage: opts.singlePackage,
+          specificFiles: opts.specificFiles,
+          unpackaged:    opts.unpackaged
+        }
+      }
     };
 
     opts.method = 'retrieve';
@@ -307,6 +311,8 @@ module.exports = function(nforce, name) {
       }).envelope()
     };
 
+    console.log(ropts.body);
+
     request(ropts, function(err, res) {
 
       if(err) {
@@ -319,6 +325,7 @@ module.exports = function(nforce, name) {
 
         if(msg.isError()) {
           console.error('error received');
+          console.error(msg.getBody()['soapenv:Fault'][0]);
           console.error('isExpiredSession: ' + msg.isExpiredSession());
 
           if(msg.isExpiredSession() &&

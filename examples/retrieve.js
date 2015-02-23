@@ -20,14 +20,22 @@ var org = nforce.createConnection({
 
 org.authenticate().then(function(){
   return org.meta.retrieve({
-    retrieveRequest: {
-      apiVersion: 30.0
+    apiVersion: '30.0',
+    unpackaged: {
+      version: '30.0',
+      types: [
+        {
+          name: 'CustomObject',
+          members: ['*']
+        }
+      ]
     }
   });
 }).then(function(res) {
-  return org.meta.checkRetrieveStatus({ id: res.id });
-}).then(function(res) {
   console.log(res);
+  //return org.meta.checkRetrieveStatus({ id: res.id });
+}).then(function(res) {
+  //console.log(res);
 }).error(function(err) {
   console.error(err.message);
 });
