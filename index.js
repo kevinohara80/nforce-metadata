@@ -257,6 +257,7 @@ module.exports = function(nforce, name) {
 
   plugin.fn('listMetadata', function(data, cb) {
     var opts = this._getOpts(data, cb);
+    var resolver = createResolver(opts.callback);
 
     opts.data = {
       listMetadata: {
@@ -265,7 +266,16 @@ module.exports = function(nforce, name) {
       }
     };
 
-    return this.meta._apiRequest(opts, opts.callback);
+    this.meta._apiRequest(opts, opts.callback).then(function(res){
+      resolver.resolve(_.map(res.listMetadataResponse[0].result, function(m) {
+        m = _.mapValues(m, function(v) {
+          return _.isArray(v) ? v[0] : v;
+        });
+        return m;
+      }));
+    }).catch(resolver.reject);
+
+    return resolver.promise;
   });
 
   /* low-level api calls */
@@ -294,55 +304,56 @@ module.exports = function(nforce, name) {
         oauth: opts.oauth,
         method: opts.method,
         data: opts.data
-      })
+      }).envelope()
     };
 
     request(ropts, function(err, res) {
-      if(err) return resolver.reject(err);
-      parseString(res.body, function (err, result) {
-        resolver.resolve(result);
-      });
-    });
-    return resolver.promise;
 
-    // this.meta._getSoapClient(opts).then(function(client) {
-    //
-    //   client.on('request', function(a, b) {
-    //     console.log(a);
-    //     console.log(self.meta._getEndpoint(opts.oauth));
-    //   });
-    //
-    //   client.MetadataService.Metadata[opts.method](opts.data, function(err, res) {
-    //     if(err) {
-    //       if(/INVALID\_SESSION\_ID/.test(err.message) &&
-    //         self.autoRefresh === true &&
-    //         (opts.oauth.refresh_token || (self.getUsername() && self.getPassword())) &&
-    //         !opts._retryCount) {
-    //
-    //         self.autoRefreshToken.call(self, opts, function(err2, res2) {
-    //           if(err2) {
-    //             return resolver.reject(err2);
-    //           } else {
-    //             opts._retryCount = 1;
-    //             opts._resolver = resolver;
-    //             return self.meta._apiRequest.call(self, opts);
-    //           }
-    //         });
-    //
-    //       } else {
-    //         //console.log(client.lastRequest);
-    //         resolver.reject(err);
-    //       }
-    //     } else {
-    //       //console.log(client.lastRequest);
-    //       return resolver.resolve(res.result);
-    //     }
-    //   });
-    // }).error(function(err) {
-    //   resolver.reject(err);
-    // });
-    //
-    // return resolver.promise;
+      if(err) {
+        console.error('error: ' + rest.statuscode);
+        return resolver.reject(err);
+      }
+
+      soap.parseMessage(res.body, function(err, msg) {
+        if(err) return resolver.reject(err);
+
+        if(msg.isError()) {
+          console.error('error received');
+          console.error('isExpiredSession: ' + msg.isExpiredSession());
+
+          if(msg.isExpiredSession() &&
+            self.autoRefresh === true &&
+            (opts.oauth.refresh_token ||
+            (self.getUsername && self.getPassword())) &&
+            !opts._retryCount) {
+
+            console.error('running autorefresh');
+
+            self.autoRefreshToken.call(self, opts, function(err2, res2) {
+              if(err2) {
+                console.log('autorefresh failed');
+                return resolver.reject(err2);
+              } else {
+                opts._retryCount = 1;
+                opts._resolver = resolver;
+                console.log('autorefresh complete, retrying...');
+                return self.meta._apiRequest.call(self, opts);
+              }
+            });
+          } else {
+            console.log('not retrying');
+            return resolver.reject(msg.getBody());
+          }
+        } else {
+          console.log('resolving');
+          console.log(msg.getBody());
+          resolver.resolve(msg.getBody());
+        }
+      });
+
+    });
+
+    return resolver.promise;
   });
 
   /* logger methods */

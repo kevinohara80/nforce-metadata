@@ -30,7 +30,9 @@ org.authenticate().then(function(){
     ]
   });
 }).then(function(md) {
+  console.log('done!!!!');
   console.log(md);
 }).error(function(err) {
+  console.error('had an error!');
   console.error(err.message);
 });
