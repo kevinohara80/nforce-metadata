@@ -14,20 +14,26 @@ var org = nforce.createConnection({
   password: process.env.SFPASS,
   plugins: ['meta'],
   metaOpts: {
-    pollInterval: 5000
+    pollInterval: 1000
   }
 });
 
 org.authenticate().then(function(){
-  var archive = archiver('zip');
+  var archive = archiver('zip')
+    .directory('examples/src', 'src')
+    .finalize();
 
-  var promise = org.meta.deployAndPoll({ zipFile: archive });
+  var promise = org.meta.deployAndPoll({
+    zipFile: archive
+  });
 
-  archive.directory('examples/src', 'src').finalize();
+  promise.poller.on('poll', function(res) {
+    console.log('poll status: ' + res.status);
+  });
 
   return promise;
 }).then(function(res) {
-  console.dir(res);
+  console.log('completed: ' + res.status);
 }).error(function(err) {
   console.error(err);
 });
