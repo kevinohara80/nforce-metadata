@@ -200,7 +200,19 @@ module.exports = function(nforce, name) {
   /* crud-based api calls */
 
   plugin.fn('createMetadata', function(data, cb) {
-    var opts = this._getOpts(data);
+    var opts = this._getOpts(data, cb);
+
+    var type = opts.type;
+
+    opts.data = {
+      metadata: _.map(opts.metadata, function(m) {
+        m.$attributes = { 'xsi:type': type };
+        return m;
+      })
+    };
+
+    opts.method = 'createMetadata';
+    return this.meta._apiRequest(opts, opts.callback);
   });
 
   plugin.fn('readMetadata', function(data, cb) {

@@ -1,6 +1,5 @@
 var nforce = require('nforce');
 var _      = require('lodash');
-var util   = require('util');
 
 require('../')(nforce);
 
@@ -15,9 +14,19 @@ var org = nforce.createConnection({
 });
 
 org.authenticate().then(function(){
-  return org.meta.describeApi();
-}).then(function(desc) {
-  console.log(util.inspect(desc.MetadataService.Metadata, { depth: 2 }));
+  return org.meta.createMetadata({
+    type: 'CustomField',
+    metadata: [
+      {
+        fullName: 'Test_Object__c.Foo_Bar__c',
+        label: 'Foo Bar',
+        length: 100,
+        type: 'Text'
+      }
+    ]
+  });
+}).then(function(res) {
+  console.log(res);
 }).error(function(err) {
   console.error(err);
 });
