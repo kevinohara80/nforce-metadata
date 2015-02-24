@@ -109,7 +109,7 @@ module.exports = function(nforce, name) {
 
     return resolver.promise;
   });
-  
+
   plugin.fn('checkDeployStatus', function(data, cb) {
     var opts = this._getOpts(data, cb);
 
@@ -122,25 +122,6 @@ module.exports = function(nforce, name) {
     return this.meta._apiRequest(opts, opts.callback);
   });
 
-  plugin.fn('pollDeployStatus', function(data) {
-    var self = this;
-    var opts = this._getOpts(data);
-
-    opts.asyncProcessId = opts.asyncProcessId || opts.id;
-
-    var poller = Poller.create({
-      interval: (self.metaOpts) ? self.metaOpts.pollInterval : 2000,
-      poll: function(cb) {
-        self.meta.checkDeployStatus(opts, function(err, res) {
-          if(err) cb(err);
-          else cb(null, res)
-        });
-      }
-    });
-
-    return poller.start();
-  });
-
   plugin.fn('cancelDeploy', function(data, cb) {
     var opts = this._getOpts(data);
   });
@@ -149,10 +130,71 @@ module.exports = function(nforce, name) {
 
   plugin.fn('retrieve', function(data, cb) {
     var opts = this._getOpts(data);
+
+    opts.data = {
+      retrieveRequest: {
+        apiVersion: opts.apiVersion || this.apiVersion,
+        packageNames: opts.packageNames,
+        singlePackage: opts.singlePackage,
+        specificFiles: opts.specificFiles,
+        unpackaged: opts.unpackaged
+      }
+    };
+
+    opts.method = 'retrieve';
+    return this.meta._apiRequest(opts, opts.callback);
+  });
+
+  plugin.fn('retrieveAndPoll', function(data, cb) {
+    var self = this;
+    var opts = this._getOpts(data);
+    var resolver = createResolver(opts.callback);
+
+    resolver.promise = resolver.promise || {};
+
+    var poller = resolver.promise.poller = Poller.create({
+      interval: self.metaOpts.pollInterval || 2000
+    });
+
+    opts.data = {
+      retrieveRequest: {
+        apiVersion: opts.apiVersion || this.apiVersion,
+        packageNames: opts.packageNames,
+        singlePackage: opts.singlePackage,
+        specificFiles: opts.specificFiles,
+        unpackaged: opts.unpackaged
+      }
+    };
+
+    this.meta.retrieve(opts).then(function(res) {
+      console.log('res is good: ' + res.state);
+      poller.opts.poll = function(cb) {
+        self.meta.checkRetrieveStatus({
+          id: res.id
+        }, function(err, res) {
+          if(err) cb(err);
+          else cb(null, res);
+        });
+      };
+
+      poller.on('done', resolver.resolve);
+      poller.on('error', resolver.reject);
+
+      poller.start();
+    }).error(resolver.reject);
+
+    return resolver.promise;
   });
 
   plugin.fn('checkRetrieveStatus', function(data, cb) {
-    var opts = this._getOpts(data);
+    var opts = this._getOpts(data, cb);
+
+    opts.data = {
+      id: opts.id
+    };
+
+    opts.method = 'checkRetrieveStatus';
+    return this.meta._apiRequest(opts, opts.callback);
   });
 
   /* crud-based api calls */
