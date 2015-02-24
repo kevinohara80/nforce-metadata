@@ -119,11 +119,56 @@ module.exports = function(nforce, name) {
     };
 
     opts.method = 'checkDeployStatus';
+
     return this.meta._apiRequest(opts, opts.callback);
   });
 
   plugin.fn('cancelDeploy', function(data, cb) {
+    var opts = this._getOpts(data, cb);
+
+    opts.data = {
+      id: opts.id
+    };
+
+    opts.method = 'cancelDeploy';
+
+    return this.meta._apiRequest(opts, opts.callback);
+  });
+
+  plugin.fn('cancelDeployAndPoll', function(data, cb) {
+    var self = this;
     var opts = this._getOpts(data);
+    var resolver = createResolver(opts.callback);
+
+    resolver.promise = resolver.promise || {};
+
+    var poller = resolver.promise.poller = Poller.create({
+      interval: self.metaOpts.pollInterval || 2000
+    });
+
+    opts.data = {
+      id: opts.id,
+      includeDeleted: opts.includeDeleted
+    };
+
+    this.meta.cancelDeploy(opts).then(function(res) {
+      poller.opts.poll = function(cb) {
+        self.meta.checkDeployStatus({
+          id: res.id,
+          includeDeleted: opts.includeDeleted
+        }, function(err, res) {
+          if(err) cb(err);
+          else cb(null, res);
+        });
+      };
+
+      poller.on('done', resolver.resolve);
+      poller.on('error', resolver.reject);
+
+      poller.start();
+    }).error(resolver.reject);
+
+    return resolver.promise;
   });
 
   /* retrieve api calls */
@@ -142,6 +187,7 @@ module.exports = function(nforce, name) {
     };
 
     opts.method = 'retrieve';
+
     return this.meta._apiRequest(opts, opts.callback);
   });
 
@@ -194,6 +240,7 @@ module.exports = function(nforce, name) {
     };
 
     opts.method = 'checkRetrieveStatus';
+
     return this.meta._apiRequest(opts, opts.callback);
   });
 
@@ -212,6 +259,7 @@ module.exports = function(nforce, name) {
     };
 
     opts.method = 'createMetadata';
+
     return this.meta._apiRequest(opts, opts.callback);
   });
 
