@@ -86,8 +86,8 @@ module.exports = function(nforce, name) {
     });
 
     opts.data = {
-      'ZipFile': opts.zipFile,
-      'DeployOptions': opts.deployOptions || opts.options || {}
+      ZipFile: opts.zipFile,
+      DeployOptions: opts.deployOptions || opts.options || {}
     };
 
     this.meta.deploy(opts).then(function(res) {
@@ -97,17 +97,19 @@ module.exports = function(nforce, name) {
           includeDeleted: opts.includeDeleted
         }, function(err, res) {
           if(err) cb(err);
-          else cb(null, res)
+          else cb(null, res);
         });
       };
 
       poller.on('done', resolver.resolve);
       poller.on('error', resolver.reject);
-    });
+
+      poller.start();
+    }).error(resolver.reject);
 
     return resolver.promise;
   });
-
+  
   plugin.fn('checkDeployStatus', function(data, cb) {
     var opts = this._getOpts(data, cb);
 
