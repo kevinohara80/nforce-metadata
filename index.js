@@ -311,12 +311,9 @@ module.exports = function(nforce, name) {
       }).envelope()
     };
 
-    console.log(ropts.body);
-
     request(ropts, function(err, res) {
 
       if(err) {
-        console.error('error: ' + rest.statuscode);
         return resolver.reject(err);
       }
 
@@ -324,9 +321,6 @@ module.exports = function(nforce, name) {
         if(err) return resolver.reject(err);
 
         if(msg.isError()) {
-          console.error('error received');
-          console.error(msg.getBody()['soapenv:Fault'][0]);
-          console.error('isExpiredSession: ' + msg.isExpiredSession());
 
           if(msg.isExpiredSession() &&
             self.autoRefresh === true &&
@@ -334,26 +328,19 @@ module.exports = function(nforce, name) {
             (self.getUsername && self.getPassword())) &&
             !opts._retryCount) {
 
-            console.error('running autorefresh');
-
             self.autoRefreshToken.call(self, opts, function(err2, res2) {
               if(err2) {
-                console.log('autorefresh failed');
                 return resolver.reject(err2);
               } else {
                 opts._retryCount = 1;
                 opts._resolver = resolver;
-                console.log('autorefresh complete, retrying...');
                 return self.meta._apiRequest.call(self, opts);
               }
             });
           } else {
-            console.log('not retrying');
             return resolver.reject(msg.getBody());
           }
         } else {
-          console.log('resolving');
-          console.log(msg.getBody());
           resolver.resolve(msg.getBody());
         }
       });

@@ -20,8 +20,10 @@ var org = nforce.createConnection({
 });
 
 org.authenticate().then(function(){
+  console.log('authenticated. revoking token now.');
   return org.revokeToken(org.getOAuth().access_token);
 }).then(function(desc) {
+  console.log('token revoked. listing metadata.');
   return org.meta.listMetadata({
     queries: [
       { type: 'CustomObject' },
