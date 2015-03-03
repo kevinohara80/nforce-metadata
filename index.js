@@ -40,8 +40,10 @@ module.exports = function(nforce, name) {
     function doDeploy(zipInput) {
 
       opts.data = {
-        'ZipFile': zipInput,
-        'DeployOptions': opts.deployOptions || opts.options || {}
+        deploy: {
+          ZipFile: zipInput,
+          DeployOptions: opts.deployOptions || opts.options || {}
+        }
       };
 
       opts._resolver = resolver;
@@ -117,11 +119,12 @@ module.exports = function(nforce, name) {
     var opts = this._getOpts(data, cb);
 
     opts.data = {
-      asyncProcessId: opts.asyncProcessId || opts.id,
-      includeDetails: opts.includeDetails
+      checkDeployStatus: {
+        asyncProcessId: opts.asyncProcessId || opts.id,
+        includeDetails: opts.includeDetails
+      }
     };
 
-    opts.method = 'checkDeployStatus';
     return this.meta._apiRequest(opts, opts.callback);
   });
 
@@ -338,7 +341,8 @@ module.exports = function(nforce, name) {
               }
             });
           } else {
-            return resolver.reject(msg.getBody());
+            console.log(msg.getBody());
+            return resolver.reject(msg.getError());
           }
         } else {
           resolver.resolve(msg.getBody());
