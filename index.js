@@ -1,4 +1,5 @@
 var stream      = require('stream');
+var loadash     = require('lodash');
 var soapClient  = require('./lib/soap-client');
 var Poller      = require('./lib/poller');
 var Promise     = require('bluebird');
@@ -6,12 +7,18 @@ var request     = require('request');
 var soap        = require('./lib/soap');
 var parseString = require('xml2js').parseString;
 
+function flattenArrays(obj, values) {
+  // values = values || [];
+  // obj = _.mapValues(obj, function(v){
+  //   return _.indexOf(_.isArray(v) ? v[0] : v;
+  // })
+}
+
 module.exports = function(nforce, name) {
   // throws if the plugin already exists
   var plugin = nforce.plugin(name || 'meta');
 
   // create local vars for some utils provided by nforce
-  var _              = nforce.util._;
   var createResolver = nforce.util.promises.createResolver;
 
   /* describe api call */
@@ -46,11 +53,19 @@ module.exports = function(nforce, name) {
         }
       };
 
-      opts._resolver = resolver;
-
       self.meta._apiRequest(data, function(err, res) {
-        if(err) return resolver.reject(err);
-        else return resolver.resolve(null, res);
+        if(err) {
+          return resolver.reject(err);
+        } else {
+
+          var result = res.deployResponse[0].result[0];
+
+          if(_.isArray(result.done)) result.done = result.done[0];
+          if(_.isArray(result.id)) result.id = result.id[0];
+          if(_.isArray(result.state)) result.state = result.state[0];
+
+          return resolver.resolve(result);
+        }
       });
 
     }
@@ -345,6 +360,7 @@ module.exports = function(nforce, name) {
             return resolver.reject(msg.getError());
           }
         } else {
+          console.log('resolving ok');
           resolver.resolve(msg.getBody());
         }
       });

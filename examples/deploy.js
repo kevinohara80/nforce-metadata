@@ -26,6 +26,7 @@ org.authenticate().then(function(){
   return promise;
 
 }).then(function(resp) {
+  console.log('finished ok');
   console.log(resp);
 }).error(function(err) {
   console.error(err);
