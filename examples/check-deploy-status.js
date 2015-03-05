@@ -23,7 +23,7 @@ org.authenticate().then(function(){
     includeDetails: true
   });
 }).then(function(res) {
-  console.dir(res.status);
+  console.dir(res);
 }).error(function(err) {
   console.error(err);
 });

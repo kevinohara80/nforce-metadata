@@ -1,17 +1,21 @@
 var stream      = require('stream');
-var loadash     = require('lodash');
+var _           = require('lodash');
 var soapClient  = require('./lib/soap-client');
 var Poller      = require('./lib/poller');
 var Promise     = require('bluebird');
 var request     = require('request');
 var soap        = require('./lib/soap');
+var parser      = require('./lib/parser');
 var parseString = require('xml2js').parseString;
 
 function flattenArrays(obj, values) {
-  // values = values || [];
-  // obj = _.mapValues(obj, function(v){
-  //   return _.indexOf(_.isArray(v) ? v[0] : v;
-  // })
+  obj = _.mapValues(obj, function(v, k) {
+    if(_.isArray(v) && (!values || _.indexOf(values, k) !== -1)) {
+      return v[0];
+    }
+    return v;
+  });
+  return obj;
 }
 
 module.exports = function(nforce, name) {
@@ -56,16 +60,10 @@ module.exports = function(nforce, name) {
       self.meta._apiRequest(data, function(err, res) {
         if(err) {
           return resolver.reject(err);
-        } else {
-
-          var result = res.deployResponse[0].result[0];
-
-          if(_.isArray(result.done)) result.done = result.done[0];
-          if(_.isArray(result.id)) result.id = result.id[0];
-          if(_.isArray(result.state)) result.state = result.state[0];
-
-          return resolver.resolve(result);
         }
+        var result = res.deployResponse[0].result[0];
+        // return resolver.resolve(flattenArrays(result));
+        return resolver.resolve(parser('AsyncResult', result));
       });
 
     }
@@ -131,7 +129,8 @@ module.exports = function(nforce, name) {
   });
 
   plugin.fn('checkDeployStatus', function(data, cb) {
-    var opts = this._getOpts(data, cb);
+    var opts     = this._getOpts(data, cb);
+    var resolver = createResolver(opts.callback);
 
     opts.data = {
       checkDeployStatus: {
@@ -140,7 +139,28 @@ module.exports = function(nforce, name) {
       }
     };
 
-    return this.meta._apiRequest(opts, opts.callback);
+    this.meta._apiRequest(opts, function(err, res) {
+      if(err) {
+        return resolver.reject(err);
+      }
+      var result = res.checkDeployStatusResponse[0].result[0];
+      result = flattenArrays(result);
+
+      result = _.mapValues(result, function(v, k) {
+        if(v === 'true') return true;
+        if(v === 'false') return false;
+        if(/^number/.test(k) && v) return parseInt(v, 10);
+        if(/Date/i.test(k) && v) return new Date(v);
+
+        if(k === 'details') {
+          console.log(v)
+        }
+        return v;
+      });
+      return resolver.resolve(result);
+    });
+
+    return resolver.promise;
   });
 
   plugin.fn('cancelDeploy', function(data, cb) {
