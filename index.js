@@ -144,20 +144,20 @@ module.exports = function(nforce, name) {
         return resolver.reject(err);
       }
       var result = res.checkDeployStatusResponse[0].result[0];
-      result = flattenArrays(result);
-
-      result = _.mapValues(result, function(v, k) {
-        if(v === 'true') return true;
-        if(v === 'false') return false;
-        if(/^number/.test(k) && v) return parseInt(v, 10);
-        if(/Date/i.test(k) && v) return new Date(v);
-
-        if(k === 'details') {
-          console.log(v)
-        }
-        return v;
-      });
-      return resolver.resolve(result);
+      // result = flattenArrays(result);
+      //
+      // result = _.mapValues(result, function(v, k) {
+      //   if(v === 'true') return true;
+      //   if(v === 'false') return false;
+      //   if(/^number/.test(k) && v) return parseInt(v, 10);
+      //   if(/Date/i.test(k) && v) return new Date(v);
+      //
+      //   if(k === 'details') {
+      //     console.log(v)
+      //   }
+      //   return v;
+      // });
+      return resolver.resolve(parser('DeployResult', result));
     });
 
     return resolver.promise;

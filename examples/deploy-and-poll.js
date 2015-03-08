@@ -29,6 +29,7 @@ org.authenticate().then(function(){
 
   promise.poller.on('poll', function(res) {
     console.log('poll status: ' + res.status);
+    console.log(res.details);
   });
 
   return promise;
