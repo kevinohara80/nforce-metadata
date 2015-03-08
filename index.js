@@ -25,20 +25,6 @@ module.exports = function(nforce, name) {
   // create local vars for some utils provided by nforce
   var createResolver = nforce.util.promises.createResolver;
 
-  /* describe api call */
-
-  plugin.fn('describeApi', function(data, cb) {
-    var opts     = this._getOpts(data, cb);
-    var resolver = createResolver(opts.callback);
-
-    this.meta._getSoapClient(data, function(err, client) {
-      if(err) return resolver.reject(err);
-      return resolver.resolve(client.describe());
-    });
-
-    return resolver.promise;
-  });
-
   /* deploy api calls */
 
   plugin.fn('deploy', function(data, cb) {
@@ -62,7 +48,6 @@ module.exports = function(nforce, name) {
           return resolver.reject(err);
         }
         var result = res.deployResponse[0].result[0];
-        // return resolver.resolve(flattenArrays(result));
         return resolver.resolve(parser('AsyncResult', result));
       });
 
@@ -144,19 +129,6 @@ module.exports = function(nforce, name) {
         return resolver.reject(err);
       }
       var result = res.checkDeployStatusResponse[0].result[0];
-      // result = flattenArrays(result);
-      //
-      // result = _.mapValues(result, function(v, k) {
-      //   if(v === 'true') return true;
-      //   if(v === 'false') return false;
-      //   if(/^number/.test(k) && v) return parseInt(v, 10);
-      //   if(/Date/i.test(k) && v) return new Date(v);
-      //
-      //   if(k === 'details') {
-      //     console.log(v)
-      //   }
-      //   return v;
-      // });
       return resolver.resolve(parser('DeployResult', result));
     });
 
@@ -164,15 +136,60 @@ module.exports = function(nforce, name) {
   });
 
   plugin.fn('cancelDeploy', function(data, cb) {
-    var opts = this._getOpts(data);
+    var opts     = this._getOpts(data);
+    var resolver = createResolver(opts.callback);
 
     opts.data = {
-      id: opts.id
+      cancelDeploy: {
+        id: opts.id
+      }
     };
 
-    opts.method = 'cancelDeploy';
+    this.meta._apiRequest(opts, function(err, res) {
+      if(err) {
+        return resolver.reject(err);
+      }
+      var result = res.cancelDeployResponse[0].result[0];
+      return resolver.resolve(parser('DeployResult', result));
+    });
 
-    return this.meta._apiRequest(opts, opts.callback);
+    return resolver.promise;
+  });
+
+  plugin.fn('cancelDeployAndPoll', function(data, cb) {
+    var self     = this;
+    var opts     = this._getOpts(data);
+    var resolver = createResolver(opts.callback);
+
+    resolver.promise = resolver.promise || {};
+
+    var poller = resolver.promise.poller = Poller.create({
+      interval: self.metaOpts.pollInterval || 2000
+    });
+
+    opts.data = {
+      id: opts.id,
+      includeDeleted: opts.includeDeleted
+    };
+
+    this.meta.cancelDeploy(opts).then(function(res) {
+      poller.opts.poll = function(cb) {
+        self.meta.checkDeployStatus({
+          id: res.id,
+          includeDeleted: opts.includeDeleted
+        }, function(err, res) {
+          if(err) cb(err);
+          else cb(null, res);
+        });
+      };
+
+      poller.on('done', resolver.resolve);
+      poller.on('error', resolver.reject);
+
+      poller.start();
+    }).error(resolver.reject);
+
+    return resolver.promise;
   });
 
   /* retrieve api calls */
