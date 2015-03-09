@@ -33,9 +33,10 @@ org.authenticate().then(function(){
   });
 }).then(function(res) {
   console.log(res);
-  //return org.meta.checkRetrieveStatus({ id: res.id });
+  return org.meta.checkRetrieveStatus({ id: res.id });
 }).then(function(res) {
-  //console.log(res);
+  console.log('retrieve status check result:');
+  console.log(res);
 }).error(function(err) {
   console.error(err.message);
 });

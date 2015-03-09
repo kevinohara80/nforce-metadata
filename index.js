@@ -1,6 +1,5 @@
 var stream      = require('stream');
 var _           = require('lodash');
-var soapClient  = require('./lib/soap-client');
 var Poller      = require('./lib/poller');
 var Promise     = require('bluebird');
 var request     = require('request');
@@ -195,7 +194,8 @@ module.exports = function(nforce, name) {
   /* retrieve api calls */
 
   plugin.fn('retrieve', function(data, cb) {
-    var opts = this._getOpts(data);
+    var opts     = this._getOpts(data);
+    var resolver = createResolver(opts.callback);
 
     opts.data = {
       retrieve: {
@@ -209,14 +209,20 @@ module.exports = function(nforce, name) {
       }
     };
 
-    opts.method = 'retrieve';
+    this.meta._apiRequest(opts, function(err, res) {
+      if(err) {
+        return resolver.reject(err);
+      }
+      var result = res.retrieveResponse[0].result[0];
+      return resolver.resolve(parser('AsyncResult', result));
+    });
 
-    return this.meta._apiRequest(opts, opts.callback);
+    return resolver.promise;
   });
 
   plugin.fn('retrieveAndPoll', function(data, cb) {
-    var self = this;
-    var opts = this._getOpts(data);
+    var self     = this;
+    var opts     = this._getOpts(data);
     var resolver = createResolver(opts.callback);
 
     resolver.promise = resolver.promise || {};
@@ -254,22 +260,35 @@ module.exports = function(nforce, name) {
 
 
   plugin.fn('checkRetrieveStatus', function(data, cb) {
-    var opts = this._getOpts(data);
+    var opts     = this._getOpts(data);
+    var resolver = createResolver(opts.callback);
 
     opts.data = {
-      id: opts.id
+      checkRetrieveStatus: {
+        id: opts.id
+      }
     };
 
-    opts.method = 'checkRetrieveStatus';
+    return this.meta._apiRequest(opts, function(err, res) {
+      if(err) {
+        return resolver.reject(err);
+      }
+      var result = res.checkRetrieveStatusResponse[0].result[0];
+      return resolver.resolve(parser('RetrieveResult', result));
+    });
 
-    return this.meta._apiRequest(opts, opts.callback);
-
+    return resolver.promise;
   });
 
   /* crud-based api calls */
 
   plugin.fn('createMetadata', function(data, cb) {
-    var opts = this._getOpts(data);
+    var opts     = this._getOpts(data);
+    var resolver = createResolver(opts.callback);
+
+
+
+    return resolver.promise;
   });
 
   plugin.fn('readMetadata', function(data, cb) {
