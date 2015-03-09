@@ -26,7 +26,7 @@ org.authenticate().then(function(){
     ]
   });
 }).then(function(res) {
-  console.log(res);
+  console.log(res.errors[0]);
 }).error(function(err) {
   console.error(err);
 });
