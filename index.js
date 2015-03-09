@@ -286,6 +286,25 @@ module.exports = function(nforce, name) {
     var opts     = this._getOpts(data);
     var resolver = createResolver(opts.callback);
 
+    var type = opts.type;
+
+    opts.data = {
+      createMetadata: {
+        metadata: _.map(opts.metadata, function(m) {
+          m.$attributes = { 'xsi:type': type };
+          return m;
+        })
+      }
+    };
+
+
+    this.meta._apiRequest(opts, function(err, res) {
+      if(err) {
+        return resolver.reject(err);
+      }
+      var result = res.createMetadataResponse[0].result[0];
+      return resolver.resolve(parser('SaveResult', result));
+    });
 
 
     return resolver.promise;
