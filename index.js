@@ -291,12 +291,13 @@ module.exports = function(nforce, name) {
     opts.data = {
       createMetadata: {
         metadata: _.map(opts.metadata, function(m) {
-          m.$attributes = { 'xsi:type': type };
+          if(type) {
+            m['@xsi:type'] = type;
+          }
           return m;
         })
       }
     };
-
 
     this.meta._apiRequest(opts, function(err, res) {
       if(err) {

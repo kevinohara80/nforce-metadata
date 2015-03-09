@@ -18,7 +18,7 @@ org.authenticate().then(function(){
     type: 'CustomField',
     metadata: [
       {
-        fullName: 'Test_Object__c.Foo_Bar__c',
+        fullName: 'Test_Object__c.Foo_Bar_Baz__c',
         label: 'Foo Bar',
         length: 100,
         type: 'Text'
