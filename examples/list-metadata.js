@@ -22,7 +22,6 @@ org.authenticate().then(function(){
     ]
   });
 }).then(function(meta) {
-  console.log(meta);
   _.each(meta, function(r) {
     console.log(r.type + ': ' + r.fullName + ' (' + r.fileName + ')');
   });

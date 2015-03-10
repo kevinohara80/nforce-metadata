@@ -364,14 +364,22 @@ module.exports = function(nforce, name) {
       }
     };
 
-    this.meta._apiRequest(opts, opts.callback).then(function(res){
-      resolver.resolve(_.map(res.listMetadataResponse[0].result, function(m) {
-        m = _.mapValues(m, function(v) {
-          return _.isArray(v) ? v[0] : v;
-        });
-        return m;
-      }));
-    }).catch(resolver.reject);
+    // this.meta._apiRequest(opts, opts.callback).then(function(res){
+    //   resolver.resolve(_.map(res.listMetadataResponse[0].result, function(m) {
+    //     m = _.mapValues(m, function(v) {
+    //       return _.isArray(v) ? v[0] : v;
+    //     });
+    //     return m;
+    //   }));
+    // }).catch(resolver.reject);
+
+    this.meta._apiRequest(opts, function(err, res) {
+      if(err) {
+        return resolver.reject(err);
+      }
+      var result = res.listMetadataResponse[0].result;
+      return resolver.resolve(parser('FileProperties[]', result));
+    })
 
     return resolver.promise;
   });
