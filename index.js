@@ -307,12 +307,41 @@ module.exports = function(nforce, name) {
       return resolver.resolve(parser('SaveResult', result));
     });
 
-
     return resolver.promise;
   });
 
   plugin.fn('readMetadata', function(data, cb) {
-    var opts = this._getOpts(data);
+    var opts     = this._getOpts(data);
+    var resolver = createResolver(opts.callback);
+
+    opts.data = {
+      readMetadata: {
+        metadataType: opts.metadataType,
+        '#list': _.map(opts.fullNames, function(n) {
+          return { fullNames: n };
+        })
+      }
+    };
+
+    this.meta._apiRequest(opts, function(err, res) {
+      if(err) {
+        return resolver.reject(err);
+      }
+      var result = res.readMetadataResponse[0].result[0];
+
+      var parsed = parser('ReadResult', result);
+
+      var records = _.map(parsed.records, function(r) {
+        var r = parser(r['$']['xsi:type'], r);
+        delete r['$'];
+        return r;
+      });
+
+      console.log(records);
+      return resolver.resolve(records);
+    });
+
+    return resolver.promise;
   });
 
   plugin.fn('updateMetadata', function(data, cb) {
