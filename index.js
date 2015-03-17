@@ -339,6 +339,12 @@ module.exports = function(nforce, name) {
     return resolver.promise;
   });
 
+  plugin.fn('_getEndpoint', function(data){
+    var opts = this._getOpts(data);
+
+    
+  });
+
   plugin.fn('_apiRequest', function(data, cb) {
     var self     = this;
     var opts     = this._getOpts(data, cb);
@@ -368,7 +374,7 @@ module.exports = function(nforce, name) {
         } else {
           return resolver.resolve(res.result);
         }
-      });
+      }, { uri: self._getEndpoint(data) });
     }).error(function(err) {
       resolver.reject(err);
     });
