@@ -4,7 +4,7 @@ var Poller      = require('./lib/poller');
 var Promise     = require('bluebird');
 var request     = require('request');
 var soap        = require('./lib/soap');
-var parser      = require('./lib/parser');
+var unmarshall  = require('./lib/unmarshaller');
 var parseString = require('xml2js').parseString;
 
 module.exports = function(nforce, name) {
@@ -37,7 +37,7 @@ module.exports = function(nforce, name) {
           return resolver.reject(err);
         }
         var result = res.deployResponse[0].result[0];
-        return resolver.resolve(parser('AsyncResult', result));
+        return resolver.resolve(unmarshall('AsyncResult', result));
       });
 
     }
@@ -118,7 +118,7 @@ module.exports = function(nforce, name) {
         return resolver.reject(err);
       }
       var result = res.checkDeployStatusResponse[0].result[0];
-      return resolver.resolve(parser('DeployResult', result));
+      return resolver.resolve(unmarshall('DeployResult', result));
     });
 
     return resolver.promise;
@@ -139,7 +139,7 @@ module.exports = function(nforce, name) {
         return resolver.reject(err);
       }
       var result = res.cancelDeployResponse[0].result[0];
-      return resolver.resolve(parser('DeployResult', result));
+      return resolver.resolve(unmarshall('DeployResult', result));
     });
 
     return resolver.promise;
@@ -204,7 +204,7 @@ module.exports = function(nforce, name) {
         return resolver.reject(err);
       }
       var result = res.retrieveResponse[0].result[0];
-      return resolver.resolve(parser('AsyncResult', result));
+      return resolver.resolve(unmarshall('AsyncResult', result));
     });
 
     return resolver.promise;
@@ -264,7 +264,7 @@ module.exports = function(nforce, name) {
         return resolver.reject(err);
       }
       var result = res.checkRetrieveStatusResponse[0].result[0];
-      return resolver.resolve(parser('RetrieveResult', result));
+      return resolver.resolve(unmarshall('RetrieveResult', result));
     });
 
     return resolver.promise;
@@ -294,7 +294,7 @@ module.exports = function(nforce, name) {
         return resolver.reject(err);
       }
       var result = res.createMetadataResponse[0].result[0];
-      return resolver.resolve(parser('SaveResult', result));
+      return resolver.resolve(unmarshall('SaveResult', result));
     });
 
     return resolver.promise;
@@ -321,7 +321,7 @@ module.exports = function(nforce, name) {
       var result = res.readMetadataResponse[0].result[0];
 
       var records = _.map(result.records, function(r) {
-        var r = parser(r['$']['xsi:type'], r);
+        var r = unmarshall(r['$']['xsi:type'], r);
         delete r['$'];
         return r;
       });
@@ -386,7 +386,7 @@ module.exports = function(nforce, name) {
         return resolver.reject(err);
       }
       var result = res.listMetadataResponse[0].result;
-      return resolver.resolve(parser('FileProperties[]', result));
+      return resolver.resolve(unmarshall('FileProperties[]', result));
     })
 
     return resolver.promise;
