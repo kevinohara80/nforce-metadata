@@ -19,7 +19,7 @@ org.authenticate().then(function(){
     fullNames: ['Test_Object__c']
   });
 }).then(function(meta) {
-  console.log(meta);
+  console.dir(meta[0].fields);
 }).error(function(err) {
   console.error(err);
 });

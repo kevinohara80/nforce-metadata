@@ -7,16 +7,6 @@ var soap        = require('./lib/soap');
 var parser      = require('./lib/parser');
 var parseString = require('xml2js').parseString;
 
-function flattenArrays(obj, values) {
-  obj = _.mapValues(obj, function(v, k) {
-    if(_.isArray(v) && (!values || _.indexOf(values, k) !== -1)) {
-      return v[0];
-    }
-    return v;
-  });
-  return obj;
-}
-
 module.exports = function(nforce, name) {
   // throws if the plugin already exists
   var plugin = nforce.plugin(name || 'meta');
@@ -327,17 +317,15 @@ module.exports = function(nforce, name) {
       if(err) {
         return resolver.reject(err);
       }
+
       var result = res.readMetadataResponse[0].result[0];
 
-      var parsed = parser('ReadResult', result);
-
-      var records = _.map(parsed.records, function(r) {
+      var records = _.map(result.records, function(r) {
         var r = parser(r['$']['xsi:type'], r);
         delete r['$'];
         return r;
       });
 
-      console.log(records);
       return resolver.resolve(records);
     });
 
@@ -392,15 +380,6 @@ module.exports = function(nforce, name) {
         asOfVersion: opts.asOfVersion
       }
     };
-
-    // this.meta._apiRequest(opts, opts.callback).then(function(res){
-    //   resolver.resolve(_.map(res.listMetadataResponse[0].result, function(m) {
-    //     m = _.mapValues(m, function(v) {
-    //       return _.isArray(v) ? v[0] : v;
-    //     });
-    //     return m;
-    //   }));
-    // }).catch(resolver.reject);
 
     this.meta._apiRequest(opts, function(err, res) {
       if(err) {
@@ -469,11 +448,9 @@ module.exports = function(nforce, name) {
               }
             });
           } else {
-            console.log(msg.getBody());
             return resolver.reject(msg.getError());
           }
         } else {
-          console.log('resolving ok');
           resolver.resolve(msg.getBody());
         }
       });
