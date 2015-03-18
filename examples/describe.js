@@ -17,7 +17,7 @@ var org = nforce.createConnection({
 org.authenticate().then(function(){
   return org.meta.describeApi();
 }).then(function(desc) {
-  console.log(util.inspect(desc.MetadataService.Metadata, { depth: 2 }));
+  console.log(util.inspect(desc.MetadataService.Metadata.readMetadata, { depth: 2 }));
 }).error(function(err) {
   console.error(err);
 });
