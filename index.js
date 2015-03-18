@@ -213,7 +213,6 @@ module.exports = function(nforce, name) {
     };
 
     this.meta.retrieve(opts).then(function(res) {
-      console.log('res is good: ' + res.state);
       poller.opts.poll = function(cb) {
         self.meta.checkRetrieveStatus({
           id: res.id
@@ -339,16 +338,16 @@ module.exports = function(nforce, name) {
     return resolver.promise;
   });
 
-  plugin.fn('_getEndpoint', function(data){
-    var opts = this._getOpts(data);
-
-    
-  });
-
   plugin.fn('_apiRequest', function(data, cb) {
     var self     = this;
     var opts     = this._getOpts(data, cb);
     var resolver = opts._resolver || createResolver(opts.callback);
+
+    var requestOpts = {
+      uri: opts.oauth.instance_url +
+        '/services/Soap/m/' +
+        self.apiVersion.replace('v', '')
+    };
 
     this.meta._getSoapClient(opts).then(function(client) {
       client.MetadataService.Metadata[opts.method](opts.data, function(err, res) {
@@ -374,7 +373,7 @@ module.exports = function(nforce, name) {
         } else {
           return resolver.resolve(res.result);
         }
-      }, { uri: self._getEndpoint(data) });
+      }, requestOpts );
     }).error(function(err) {
       resolver.reject(err);
     });
@@ -392,7 +391,7 @@ module.exports = function(nforce, name) {
 
   plugin.fn('_logErr', function(msg) {
     if(this.debug === true) {
-      console.log('[meta][err]: ' + msg);
+      console.error('[meta][err]: ' + msg);
     }
   });
 
