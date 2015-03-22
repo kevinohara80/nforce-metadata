@@ -1,5 +1,6 @@
 var nforce = require('nforce');
 var _      = require('lodash');
+var util   = require('util');
 
 require('../')(nforce);
 
@@ -14,17 +15,16 @@ var org = nforce.createConnection({
 });
 
 org.authenticate().then(function(){
-  return org.meta.listMetadata({
-    queries: [
-      { type: 'CustomObject' },
-      { type: 'CustomField' },
-      { type: 'ApexClass' }
-    ]
-  });
-}).then(function(meta) {
-  _.each(meta, function(r) {
-    console.log(r.type + ': ' + r.fullName + ' (' + r.fileName + ')');
-  });
+  return org.meta.describeMetadata();
+}).then(function(desc) {
+  _(desc.metadataObjects).map(function(m) {
+    return m.xmlName;
+  })
+  .sort()
+  .forEach(function(m) {
+    console.log(m);
+  })
+  .value();
 }).error(function(err) {
   console.error(err);
 });

@@ -14,17 +14,14 @@ var org = nforce.createConnection({
 });
 
 org.authenticate().then(function(){
-  return org.meta.listMetadata({
-    queries: [
-      { type: 'CustomObject' },
-      { type: 'CustomField' },
-      { type: 'ApexClass' }
-    ]
+  return org.meta.deleteMetadata({
+    metadataType: 'CustomField',
+    fullNames: [ 'Test_Object__c.Foo_Bar__c' ]
   });
-}).then(function(meta) {
-  _.each(meta, function(r) {
-    console.log(r.type + ': ' + r.fullName + ' (' + r.fileName + ')');
-  });
+}).then(function(res) {
+  console.log('done');
+  console.log(res);
 }).error(function(err) {
+  console.log('error');
   console.error(err);
 });

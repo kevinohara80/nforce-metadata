@@ -263,45 +263,94 @@ module.exports = function(nforce, name) {
   });
 
   plugin.fn('readMetadata', function(data, cb) {
-    var opts = this._getOpts(data);
+    var opts = this._getOpts(data, cb);
+
+    opts.data = {
+      metadataType: opts.metadataType,
+      fullNames: opts.fullNames
+    };
+
+    opts.method = 'readMetadata';
+
+    return this.meta._apiRequest(opts, opts.callback);
   });
 
   plugin.fn('updateMetadata', function(data, cb) {
     var opts = this._getOpts(data);
+
+    var type = opts.type;
+
+    opts.data = {
+      metadata: _.map(opts.metadata, function(m) {
+        m.$attributes = { 'xsi:type': type };
+        return m;
+      })
+    };
+
+    opts.method = 'updateMetadata';
+
+    return this.meta._apiRequest(opts, opts.callback);
   });
 
   plugin.fn('upsertMetadata', function(data, cb) {
     var opts = this._getOpts(data);
+
+    var type = opts.type;
+
+    opts.data = {
+      metadata: _.map(opts.metadata, function(m) {
+        m.$attributes = { 'xsi:type': type };
+        return m;
+      })
+    };
+
+    opts.method = 'upsertMetadata';
+
+    return this.meta._apiRequest(opts, opts.callback);
   });
 
   plugin.fn('deleteMetadata', function(data, cb) {
     var opts = this._getOpts(data);
+
+    opts.data = {
+      metadataType: opts.type || opts.metadataType,
+      fullNames: opts.fullNames
+    };
+
+    opts.method = 'deleteMetadata';
+
+    return this.meta._apiRequest(opts, opts.callback);
   });
 
   plugin.fn('renameMetadata', function(data, cb) {
     var opts = this._getOpts(data);
-  });
 
-  plugin.fn('create', function(data, cb) {
-    var opts = this._getOpts(data);
-  });
+    opts.data = {
+      metadataType: opts.type || opts.metadataType,
+      oldFullName: opts.old || opts.oldFullname,
+      newFullName: opts.new || opts.newFullname
+    };
 
-  plugin.fn('delete', function(data, cb) {
-    var opts = this._getOpts(data);
-  });
+    opts.method = 'renameMetadata';
 
-  plugin.fn('update', function(data, cb) {
-    var opts = this._getOpts(data);
+    return this.meta._apiRequest(opts, opts.callback);
   });
 
   /* utility api calls */
 
-  plugin.fn('checkStatus', function(data, cb) {
-    var opts = this._getOpts(data);
-  });
-
   plugin.fn('describeMetadata', function(data, cb) {
     var opts = this._getOpts(data);
+    var self = this;
+
+    opts.data = {
+      apiVersion: parseFloat(
+        opts.apiVersion || self.apiVersion.replace('v', ''), 10
+      )
+    };
+
+    opts.method = 'describeMetadata';
+
+    return this.meta._apiRequest(opts, opts.callback);
   });
 
   plugin.fn('listMetadata', function(data, cb) {
@@ -371,6 +420,7 @@ module.exports = function(nforce, name) {
             resolver.reject(err);
           }
         } else {
+          console.log(client.lastRequest);
           return resolver.resolve(res.result);
         }
       }, requestOpts );
