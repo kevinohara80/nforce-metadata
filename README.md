@@ -92,6 +92,7 @@ Deploy metadata to a Salesforce organization.
 
 opts: 
 
+* `oauth`: (Object:Optional) The oauth object. Required in multi-user mode.
 * `zipFile`: (Buffer|Stream|String:Required) A zip file containing metadata for deployment.
 This should be a Buffer, a Stream, or a base64 encoded String representing a zip file.
 * `deployOptions`: (Object:Optional) Encapsulates options for determining which packages 
@@ -132,6 +133,7 @@ Performs a `deploy()` and also returns a poller that polls `checkDeployStatus()`
 
 opts: 
 
+* `oauth`: (Object:Optional) The oauth object. Required in multi-user mode.
 * `interval`: (Integer|Optional) The time in milliseconds to wait between polls. Defaults
 to 2000 unless passed in as an option or defined in the connection as `metaOpts.interval`
 * `zipFile`: (Buffer|Stream|String:Required) A zip file containing metadata for deployment.
@@ -148,8 +150,33 @@ Checks the status of declarative metadata call `deploy()`.
 
 opts: 
 
+* `oauth`: (Object:Optional) The oauth object. Required in multi-user mode.
 * `id`: (String|Required) ID obtained from an AsyncResult object returned by `deploy()` 
 or a subsequent `checkDeployStatus()` call
 * `includeDetails`: (Boolean:Optional) Sets the DeployResult object to include 
 DeployDetails information ((true) or not (false). The default is false. Available 
 in API version 29.0 and later.
+
+### cancelDeploy(opts, [callback])
+
+Cancels a deployment that hasn’t completed yet.
+
+[Salesforce Documentation]
+(https://www.salesforce.com/us/developer/docs/api_meta/Content/meta_canceldeploy.htm)
+
+opts: 
+
+* `oauth`: (Object:Optional) The oauth object. Required in multi-user mode.
+* `id`: (String|Required) The ID of the deployment to cancel.
+
+### cancelDeployAndPoll(opts, [callback])
+
+Performs a `cancelDeploy()` and also returns a poller that polls `checkDeployStatus()`.
+
+opts: 
+
+* `oauth`: (Object:Optional) The oauth object. Required in multi-user mode.
+* `id`: (String|Required) The ID of the deployment to cancel.
+
+
+
