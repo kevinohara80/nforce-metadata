@@ -130,9 +130,6 @@ to a directory structure with a single package (true) or a set of packages (fals
 
 Performs a `deploy()` and also returns a poller that polls `checkDeployStatus()`.
 
-[Salesforce Documentation]
-(https://www.salesforce.com/us/developer/docs/api_meta/Content/meta_deploy.htm)
-
 opts: 
 
 * `interval`: (Integer|Optional) The time in milliseconds to wait between polls. Defaults
