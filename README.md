@@ -88,7 +88,7 @@ org.meta.createMetadata({ type: 'CustomField', metadata: md }, function(err, res
 Deploy metadata to a Salesforce organization. 
 
 [Salesforce Documentation]
-(https://www.salesforce.com/us/developer/docs/api_meta/Content/meta_deploy)
+(https://www.salesforce.com/us/developer/docs/api_meta/Content/meta_deploy.htm)
 
 opts: 
 
@@ -131,7 +131,7 @@ to a directory structure with a single package (true) or a set of packages (fals
 Performs a `deploy()` and also returns a poller that polls `checkDeployStatus()`.
 
 [Salesforce Documentation]
-(https://www.salesforce.com/us/developer/docs/api_meta/Content/meta_deploy)
+(https://www.salesforce.com/us/developer/docs/api_meta/Content/meta_deploy.htm)
 
 opts: 
 
@@ -141,3 +141,18 @@ to 2000 unless passed in as an option or defined in the connection as `metaOpts.
 This should be a Buffer, a Stream, or a base64 encoded String representing a zip file.
 * `deployOptions`: (Object:Optional) Encapsulates options for determining which packages 
 or files are deployed. See `deploy()` for all options.
+
+### checkDeployStatus(opts, [callback])
+
+Checks the status of declarative metadata call `deploy()`.
+
+[Salesforce Documentation]
+(https://www.salesforce.com/us/developer/docs/api_meta/Content/meta_checkdeploystatus.htm)
+
+opts: 
+
+* `id`: (String|Required) ID obtained from an AsyncResult object returned by `deploy()` 
+or a subsequent `checkDeployStatus()` call
+* `includeDetails`: (Boolean:Optional) Sets the DeployResult object to include 
+DeployDetails information ((true) or not (false). The default is false. Available 
+in API version 29.0 and later.
