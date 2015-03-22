@@ -25,6 +25,9 @@ var org = nforce.createConnection({
   redirectUri: '<redirect_uri>',
   username: process.env.SFUSER,
   password: process.env.SFPASS,
+  metaOpts: {       // options for nforce-metadata
+    interval: 2000  // poll interval can be specified (optional)
+  },
   plugins: ['meta'] // loads the plugin in this connection
 });
 ```
@@ -123,4 +126,18 @@ Specify the class name, one name per instance.
   * `singlePackage`: (Boolean:Optional) Indicates whether the specified .zip file points 
 to a directory structure with a single package (true) or a set of packages (false).
 
+### deployAndPoll(opts, [callback])
 
+Performs a `deploy()` and also returns a poller that polls `checkDeployStatus()`.
+
+[Salesforce Documentation]
+(https://www.salesforce.com/us/developer/docs/api_meta/Content/meta_deploy)
+
+opts: 
+
+* `interval`: (Integer|Optional) The time in milliseconds to wait between polls. Defaults
+to 2000 unless passed in as an option or defined in the connection as `metaOpts.interval`
+* `zipFile`: (Buffer|Stream|String:Required) A zip file containing metadata for deployment.
+This should be a Buffer, a Stream, or a base64 encoded String representing a zip file.
+* `deployOptions`: (Object:Optional) Encapsulates options for determining which packages 
+or files are deployed. See `deploy()` for all options.
