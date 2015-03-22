@@ -178,5 +178,29 @@ opts:
 * `oauth`: (Object:Optional) The oauth object. Required in multi-user mode.
 * `id`: (String|Required) The ID of the deployment to cancel.
 
+### retrieve(opts, [callback])
 
+is call retrieves XML file representations of components in an organization.
 
+[Salesforce Documentation]
+(https://www.salesforce.com/us/developer/docs/api_meta/Content/meta_retrieve.htm)
+
+opts:
+
+* `oauth`: (Object:Optional) The oauth object. Required in multi-user mode.
+* `apiVersion`: (Double:Optional) The API version for the retrieve request. This 
+will default to the api version defined in the connection if not supplied.
+* `packageNames`: (String[]:Optional) A list of package names to be retrieved. If 
+you are retrieving only unpackaged components, do not specify a name here. You 
+can retrieve packaged and unpackaged components in the same retrieve.
+* `singlePackage`: (Boolean:Optional) Specifies whether only a single package is 
+being retrieved (true) or not (false). If false, then more than one package is being 
+retrieved.
+* `specificFiles`: (String[]:Optional) A list of file names to be retrieved. If a 
+value is specified for this property, packageNames must be set to null and singlePackage 
+must be set to true.
+* `unpackaged`: (Object:Optional) A list of components to retrieve that are not in a 
+package. See the Salesforce documentation on [Package]
+(https://www.salesforce.com/us/developer/docs/api_meta/Content/meta_package.htm#meta_package) 
+for the valid object properties
+to supply.
