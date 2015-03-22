@@ -82,7 +82,10 @@ org.meta.createMetadata({ type: 'CustomField', metadata: md }, function(err, res
 
 ### deploy(opts, [callback])
 
-Deploy metadata to a Salesforce organization
+Deploy metadata to a Salesforce organization. 
+
+[Salesforce Documentation]
+(https://www.salesforce.com/us/developer/docs/api_meta/Content/meta_deploy)
 
 opts: 
 
@@ -100,3 +103,24 @@ that includes the .zip file.
 saved to the organization as part of the deployment (false) or not (true). Defaults 
 to false. Any errors or messages that would have been issued are still generated. 
 This parameter is similar to the Salesforce Ant tool’s checkOnly parameter.
+  * `ignoreWarnings`: (Boolean:Optional) Indicates whether a warning should allow 
+a deployment to complete successfully (true) or not (false). Defaults to false.
+  * `performRetrieve`: (Boolean:Optional) Indicates whether a `retrieve()` call is 
+performed immediately after the deployment (true) or not (false). Set to true in 
+order to retrieve whatever was just deployed.
+  * `purgeOnDelete`: (Boolean:Optional) If true, the deleted components in the 
+destructiveChanges.xml manifest file aren't stored in the Recycle Bin. Instead, 
+they become immediately eligible for deletion.
+  * `rollbackOnError`: (Boolean:Optional) Indicates whether any failure causes a 
+complete rollback (true) or not (false). If false, whatever set of actions can be performed 
+without errors are performed, and errors are returned for the remaining actions. This 
+parameter must be set to true if you are deploying to a production organization. 
+The default is false.
+  * `runAllTests`: (Boolean:Optional) If true, all Apex tests defined in the organization 
+are run.
+  * `runTests`: (String[]:Optional) A list of Apex tests to be run during deployment. 
+Specify the class name, one name per instance.
+  * `singlePackage`: (Boolean:Optional) Indicates whether the specified .zip file points 
+to a directory structure with a single package (true) or a set of packages (false).
+
+
