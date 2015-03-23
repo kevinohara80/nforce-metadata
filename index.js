@@ -178,7 +178,7 @@ module.exports = function(nforce, name) {
 
     opts.data = {
       retrieveRequest: {
-        apiVersion: opts.apiVersion || this.apiVersion,
+        apiVersion: opts.apiVersion || this.apiVersion.replace('v', ''),
         packageNames: opts.packageNames,
         singlePackage: opts.singlePackage,
         specificFiles: opts.specificFiles,
