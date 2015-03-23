@@ -81,7 +81,41 @@ org.meta.createMetadata({ type: 'CustomField', metadata: md }, function(err, res
 });
 ```
 
-## API
+## Pollers
+
+`deployAndPoll()` and `retrieveAndPoll()` calls automatically poll for status updates. A
+poller EventEmitter object is returned that provides and evented interface the the polling.
+Using the poller is quite easy. Here is an example.
+
+```js
+org.authenticate().then(function(){
+  var archive = archiver('zip')
+    .directory('examples/src', 'src')
+    .finalize();
+
+  var promise = org.meta.deployAndPoll({
+    zipFile: archive
+  });
+
+  promise.poller.on('poll', function(res) {
+    console.log('poll status: ' + res.status);
+  });
+
+  return promise;
+}).then(function(res) {
+  console.log('completed: ' + res.status);
+}).error(function(err) {
+  console.error(err);
+});
+```
+
+## Examples
+
+Many example files are included in the `examples/` directory. To run the examples,
+make sure that you have your `SFUSER` and `SFPASS` environment variables set to your
+Salesforce username and password respectively.
+
+## Connection API
 
 ### meta.deploy(opts, [callback])
 
@@ -257,3 +291,130 @@ opts:
 * `oauth`: (Object:Optional) The oauth object. Required in multi-user mode.
 * `id`: (String|Required) ID obtained from a RetrieveResult object returned by a 
 `retrieve()` call or a subsequent AsyncResult object returned by a checkStatus() call.
+
+### meta.createMetadata(opts, [callback])
+
+Adds one or more new metadata components to your organization synchronously.
+
+[Salesforce Documentation]
+(https://www.salesforce.com/us/developer/docs/api_meta/Content/meta_createMetadata.htm)
+
+opts: 
+
+* `oauth`: (Object:Optional) The oauth object. Required in multi-user mode.
+* `metadata`: (Object[]|Required) Array of one or more metadata components. See
+the [Salesforce documentation]
+(https://www.salesforce.com/us/developer/docs/api_meta/index_Left.htm#CSHID=metadata.htm|StartTopic=Content%2Fmetadata.htm|SkinName=webhelp) 
+for all possible metadata types that can be supplied
+
+### meta.readMetadata(opts, [callback])
+
+Returns one or more metadata components from your organization synchronously.
+
+[Salesforce Documentation]
+(https://www.salesforce.com/us/developer/docs/api_meta/Content/meta_readMetadata.htm)
+
+opts: 
+
+* `oauth`: (Object:Optional) The oauth object. Required in multi-user mode.
+* `metadataType` || `type`: (String|Required) The metadata type of the components to read.
+* `fullNames`: (String[]:Required) Array of full names of the components to read.
+
+### meta.updateMetadata(opts, [callback])
+
+Updates one or more metadata components in your organization synchronously.
+
+[Salesforce Documentation]
+(https://www.salesforce.com/us/developer/docs/api_meta/Content/meta_updateMetadata.htm)
+
+opts: 
+
+* `oauth`: (Object:Optional) The oauth object. Required in multi-user mode.
+* `metadata`: (Object[]|Required) Array of one or more metadata components. See
+the [Salesforce documentation]
+(https://www.salesforce.com/us/developer/docs/api_meta/index_Left.htm#CSHID=metadata.htm|StartTopic=Content%2Fmetadata.htm|SkinName=webhelp) 
+for all possible metadata types that can be supplied
+
+### meta.upsertMetadata(opts, [callback])
+
+Creates or updates one or more metadata components in your organization synchronously.
+
+[Salesforce Documentation]
+(https://www.salesforce.com/us/developer/docs/api_meta/Content/meta_upsertMetadata.htm)
+
+opts: 
+
+* `oauth`: (Object:Optional) The oauth object. Required in multi-user mode.
+* `metadata`: (Object[]|Required) Array of one or more metadata components. See
+the [Salesforce documentation]
+(https://www.salesforce.com/us/developer/docs/api_meta/index_Left.htm#CSHID=metadata.htm|StartTopic=Content%2Fmetadata.htm|SkinName=webhelp) 
+for all possible metadata types that can be supplied
+
+### meta.deleteMetadata(opts, [callback])
+
+Deletes one or more metadata components from your organization synchronously.
+
+[Salesforce Documentation]
+(https://www.salesforce.com/us/developer/docs/api_meta/Content/meta_deleteMetadata.htm)
+
+opts: 
+
+* `oauth`: (Object:Optional) The oauth object. Required in multi-user mode.
+* `metadataType` || `type`: (String|Required) The metadata type of the components to delete.
+* `fullNames`: (String[]|Required) Array of full names of the components to delete.
+
+### meta.renameMetadata(opts, [callback])
+
+Renames a metadata component in your organization synchronously.
+
+[Salesforce Documentation]
+(https://www.salesforce.com/us/developer/docs/api_meta/Content/meta_renameMetadata.htm)
+
+opts: 
+
+* `oauth`: (Object:Optional) The oauth object. Required in multi-user mode.
+* `metadataType` || `type`: (String|Required) The metadata type of the components to delete.
+* `oldFullName` || `old`: (String|Required) The current component full name.
+* `newFullName` || `new`: (String|Required) The new component full name.
+
+### meta.describeMetadata(opts, [callback])
+
+This call retrieves the metadata which describes your organization. This information 
+includes Apex classes and triggers, custom objects, custom fields on standard objects, 
+tab sets that define an app, and many other components.
+
+[Salesforce Documentation]
+(https://www.salesforce.com/us/developer/docs/api_meta/Content/meta_describe.htm)
+
+opts: 
+
+* `oauth`: (Object:Optional) The oauth object. Required in multi-user mode.
+* `apiVersion`: (Double|Required) The API version for which you want metadata; for example, 33.0.
+
+### meta.listMetadata(opts, [callback])
+
+This call retrieves property information about metadata components in your organization. 
+Data is returned for the components that match the criteria specified in the queries parameter. 
+The queries array can contain up to three ListMetadataQuery queries for each call. This call 
+supports every metadata type: both top-level, such as CustomObject and ApexClass, and child 
+types, such as CustomField and RecordType.
+
+[Salesforce Documentation]
+(https://www.salesforce.com/us/developer/docs/api_meta/Content/meta_listmetadata.htm)
+
+opts: 
+
+* `oauth`: (Object:Optional) The oauth object. Required in multi-user mode.
+* `queries`: (Object[]|Required) A list of objects that specify which components you are 
+interested in.
+  * `folder`: (String|Required) The folder associated with the component. This field is 
+required for components that use folders, such as Dashboard, Document, EmailTemplate, 
+or Report.
+  * `type`: (String|Required) The metadata type, such as CustomObject, CustomField, 
+or ApexClass.
+* `asOfVersion`: (Double|Optional) The API version for the metadata listing request. If you 
+* don't specify a value in this field, it defaults to the API version specified when you 
+* logged in. This field allows you to override the default and set another API version so 
+* that, for example, you could list the metadata for a metadata type that was added in a 
+* later version than the API version specified when you logged in. This field is available 
+* in API version 18.0 and later.
