@@ -257,3 +257,18 @@ opts:
 * `oauth`: (Object:Optional) The oauth object. Required in multi-user mode.
 * `id`: (String|Required) ID obtained from a RetrieveResult object returned by a 
 `retrieve()` call or a subsequent AsyncResult object returned by a checkStatus() call.
+
+### meta.createMetadata(opts, [callback])
+
+Adds one or more new metadata components to your organization synchronously.
+
+[Salesforce Documentation]
+(https://www.salesforce.com/us/developer/docs/api_meta/Content/meta_createMetadata.htm)
+
+opts: 
+
+* `oauth`: (Object:Optional) The oauth object. Required in multi-user mode.
+* `metadata`: (Object[]|Required) Array of one or more metadata components. See
+the [Salesforce documentation]
+(https://www.salesforce.com/us/developer/docs/api_meta/index_Left.htm#CSHID=metadata.htm|StartTopic=Content%2Fmetadata.htm|SkinName=webhelp) 
+for all possible metadata types that can be supplied
