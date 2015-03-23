@@ -81,7 +81,41 @@ org.meta.createMetadata({ type: 'CustomField', metadata: md }, function(err, res
 });
 ```
 
-## API
+## Pollers
+
+`deployAndPoll()` and `retrieveAndPoll()` calls automatically poll for status updates. A
+poller EventEmitter object is returned that provides and evented interface the the polling.
+Using the poller is quite easy. Here is an example.
+
+```js
+org.authenticate().then(function(){
+  var archive = archiver('zip')
+    .directory('examples/src', 'src')
+    .finalize();
+
+  var promise = org.meta.deployAndPoll({
+    zipFile: archive
+  });
+
+  promise.poller.on('poll', function(res) {
+    console.log('poll status: ' + res.status);
+  });
+
+  return promise;
+}).then(function(res) {
+  console.log('completed: ' + res.status);
+}).error(function(err) {
+  console.error(err);
+});
+```
+
+## Examples
+
+Many example files are included in the `examples/` directory. To run the examples,
+make sure that you have your `SFUSER` and `SFPASS` environment variables set to your
+Salesforce username and password respectively.
+
+## Connection API
 
 ### meta.deploy(opts, [callback])
 
