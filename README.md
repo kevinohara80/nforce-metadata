@@ -272,3 +272,16 @@ opts:
 the [Salesforce documentation]
 (https://www.salesforce.com/us/developer/docs/api_meta/index_Left.htm#CSHID=metadata.htm|StartTopic=Content%2Fmetadata.htm|SkinName=webhelp) 
 for all possible metadata types that can be supplied
+
+### meta.readMetadata(opts, [callback])
+
+Returns one or more metadata components from your organization synchronously.
+
+[Salesforce Documentation]
+(https://www.salesforce.com/us/developer/docs/api_meta/Content/meta_readMetadata.htm)
+
+opts: 
+
+* `oauth`: (Object:Optional) The oauth object. Required in multi-user mode.
+* `metadataType`: (String|Required) The metadata type of the components to read.
+* `fullNames`: (String[]:Required) Array of full names of the components to read.
