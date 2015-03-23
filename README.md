@@ -83,7 +83,7 @@ org.meta.createMetadata({ type: 'CustomField', metadata: md }, function(err, res
 
 ## API
 
-### deploy(opts, [callback])
+### meta.deploy(opts, [callback])
 
 Deploy metadata to a Salesforce organization. 
 
@@ -127,7 +127,7 @@ Specify the class name, one name per instance.
   * `singlePackage`: (Boolean:Optional) Indicates whether the specified .zip file points 
 to a directory structure with a single package (true) or a set of packages (false).
 
-### deployAndPoll(opts, [callback])
+### meta.deployAndPoll(opts, [callback])
 
 Performs a `deploy()` and also returns a poller that polls `checkDeployStatus()`.
 
@@ -141,7 +141,14 @@ This should be a Buffer, a Stream, or a base64 encoded String representing a zip
 * `deployOptions`: (Object:Optional) Encapsulates options for determining which packages 
 or files are deployed. See `deploy()` for all options.
 
-### checkDeployStatus(opts, [callback])
+poller events: 
+
+* `start` Poller has started polling
+* `poll` A poll has been executed. Callback contains the result.
+* `cancel` Emitted when the poller has been cancelled
+* `done` Emitted when the polling is completed
+
+### meta.checkDeployStatus(opts, [callback])
 
 Checks the status of declarative metadata call `deploy()`.
 
@@ -157,7 +164,7 @@ or a subsequent `checkDeployStatus()` call
 DeployDetails information ((true) or not (false). The default is false. Available 
 in API version 29.0 and later.
 
-### cancelDeploy(opts, [callback])
+### meta.cancelDeploy(opts, [callback])
 
 Cancels a deployment that hasn’t completed yet.
 
@@ -169,7 +176,7 @@ opts:
 * `oauth`: (Object:Optional) The oauth object. Required in multi-user mode.
 * `id`: (String|Required) The ID of the deployment to cancel.
 
-### cancelDeployAndPoll(opts, [callback])
+### meta.cancelDeployAndPoll(opts, [callback])
 
 Performs a `cancelDeploy()` and also returns a poller that polls `checkDeployStatus()`.
 
@@ -178,9 +185,9 @@ opts:
 * `oauth`: (Object:Optional) The oauth object. Required in multi-user mode.
 * `id`: (String|Required) The ID of the deployment to cancel.
 
-### retrieve(opts, [callback])
+### meta.retrieve(opts, [callback])
 
-is call retrieves XML file representations of components in an organization.
+This call retrieves XML file representations of components in an organization.
 
 [Salesforce Documentation]
 (https://www.salesforce.com/us/developer/docs/api_meta/Content/meta_retrieve.htm)
@@ -204,3 +211,49 @@ package. See the Salesforce documentation on [Package]
 (https://www.salesforce.com/us/developer/docs/api_meta/Content/meta_package.htm#meta_package) 
 for the valid object properties
 to supply.
+
+## meta.retrieveAndPoll(opts, [callback])
+
+Performs a `retrieve()` and also returns a poller that polls `checkRetrieveStatus()`.
+
+opts:
+
+* `oauth`: (Object:Optional) The oauth object. Required in multi-user mode.
+* `interval`: (Integer|Optional) The time in milliseconds to wait between polls. Defaults
+to 2000 unless passed in as an option or defined in the connection as `metaOpts.interval`
+* `apiVersion`: (Double:Optional) The API version for the retrieve request. This 
+will default to the api version defined in the connection if not supplied.
+* `packageNames`: (String[]:Optional) A list of package names to be retrieved. If 
+you are retrieving only unpackaged components, do not specify a name here. You 
+can retrieve packaged and unpackaged components in the same retrieve.
+* `singlePackage`: (Boolean:Optional) Specifies whether only a single package is 
+being retrieved (true) or not (false). If false, then more than one package is being 
+retrieved.
+* `specificFiles`: (String[]:Optional) A list of file names to be retrieved. If a 
+value is specified for this property, packageNames must be set to null and singlePackage 
+must be set to true.
+* `unpackaged`: (Object:Optional) A list of components to retrieve that are not in a 
+package. See the Salesforce documentation on [Package]
+(https://www.salesforce.com/us/developer/docs/api_meta/Content/meta_package.htm#meta_package) 
+for the valid object properties
+to supply.
+
+poller events: 
+
+* `start` Poller has started polling
+* `poll` A poll has been executed. Callback contains the result.
+* `cancel` Emitted when the poller has been cancelled
+* `done` Emitted when the polling is completed
+
+### meta.checkRetrieveStatus(opts, [callback])
+
+Checks the status of declarative metadata call `retrieve()` and returns the zip file contents.
+
+[Salesforce Documentation]
+(https://www.salesforce.com/us/developer/docs/api_meta/Content/meta_checkretrievestatus.htm)
+
+opts: 
+
+* `oauth`: (Object:Optional) The oauth object. Required in multi-user mode.
+* `id`: (String|Required) ID obtained from a RetrieveResult object returned by a 
+`retrieve()` call or a subsequent AsyncResult object returned by a checkStatus() call.
