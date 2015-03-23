@@ -51,21 +51,17 @@ module.exports = function(nforce, name) {
     }
 
     if(opts.zipFile instanceof stream.Stream) {
-      this.meta._log('is a zip stream');
       var bufs = [];
       opts.zipFile.on('data', function(d) {
         bufs.push(d);
       });
       opts.zipFile.on('end', function() {
-        self.meta._log('zip stream end');
         doDeploy(Buffer.concat(bufs).toString('base64'));
       });
       opts.zipFile.resume();
     } else if (opts.zipFile instanceof Buffer) {
-      this.meta._log('is a buffer');
       doDeploy(opts.zipFile.toString('base64'));
     } else if (opts.zipFile instanceof String || typeof opts.zipFile === 'string') {
-      this.meta._log('is a string');
       doDeploy(opts.zipFile);
     } else {
       throw new Error('invalid zipFile');
@@ -420,7 +416,6 @@ module.exports = function(nforce, name) {
             resolver.reject(err);
           }
         } else {
-          console.log(client.lastRequest);
           return resolver.resolve(res.result);
         }
       }, requestOpts );
@@ -429,20 +424,6 @@ module.exports = function(nforce, name) {
     });
 
     return resolver.promise;
-  });
-
-  /* logger methods */
-
-  plugin.fn('_log', function(msg) {
-    if(this.debug === true) {
-      console.log('[meta][log]: ' + msg);
-    }
-  });
-
-  plugin.fn('_logErr', function(msg) {
-    if(this.debug === true) {
-      console.error('[meta][err]: ' + msg);
-    }
   });
 
 };
