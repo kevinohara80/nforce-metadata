@@ -2,6 +2,7 @@ var nforce   = require('nforce');
 var _        = require('lodash');
 var util     = require('util');
 var archiver = require('archiver');
+var fs = require('fs');
 
 require('../')(nforce);
 
@@ -37,9 +38,20 @@ org.authenticate().then(function(){
   });
 
   return promise;
+
 }).then(function(res) {
-  console.log('completed: ' + res.status);
-  console.log(res.zipFile);
+
+  console.log('retrieval: ' + res.status);
+  console.log('saving retrieval as zip file...');
+
+  var zipFileName = 'nforce-meta-retrieval-' + res.id + '.zip';
+
+  var buf = new Buffer(res.zipFile, 'base64');
+  fs.writeFile(zipFileName, buf, 'binary', function(err){
+        if (err) throw err
+  })
+  console.log('zip file saved.')
+
 }).error(function(err) {
   console.error(err);
 });
