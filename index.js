@@ -90,7 +90,8 @@ module.exports = function(nforce, name) {
       poller.opts.poll = function(cb) {
         self.meta.checkDeployStatus({
           id: res.id,
-          includeDeleted: opts.includeDeleted
+          includeDeleted: opts.includeDeleted,
+          oauth: opts.oauth
         }, function(err, res) {
           if(err) cb(err);
           else cb(null, res);
@@ -151,7 +152,8 @@ module.exports = function(nforce, name) {
       poller.opts.poll = function(cb) {
         self.meta.checkDeployStatus({
           id: res.id,
-          includeDeleted: opts.includeDeleted
+          includeDeleted: opts.includeDeleted,
+          oauth: opts.oauth
         }, function(err, res) {
           if(err) cb(err);
           else cb(null, res);
@@ -211,7 +213,8 @@ module.exports = function(nforce, name) {
     this.meta.retrieve(opts).then(function(res) {
       poller.opts.poll = function(cb) {
         self.meta.checkRetrieveStatus({
-          id: res.id
+          id: res.id,
+          oauth: opts.oauth
         }, function(err, res) {
           if(err) cb(err);
           else cb(null, res);
