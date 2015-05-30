@@ -39,6 +39,6 @@
   },
   "dependencies": {
     "lodash": "^2.4.1",
-    "soap": "^0.8.0"
+    "soap": "^0.9.1"
   }
 }
