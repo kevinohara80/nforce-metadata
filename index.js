@@ -3,6 +3,8 @@ var soap    = require('./lib/soap-client');
 var Poller  = require('./lib/poller');
 var Promise = require('bluebird');
 
+var INVALID_SESSION_RE = /INVALID\_SESSION\_ID/i;
+
 module.exports = function(nforce, name) {
   // throws if the plugin already exists
   var plugin = nforce.plugin(name || 'meta');
@@ -400,7 +402,7 @@ module.exports = function(nforce, name) {
     this.meta._getSoapClient(opts).then(function(client) {
       client.MetadataService.Metadata[opts.method](opts.data, function(err, res) {
         if(err) {
-          if(/INVALID\_SESSION\_ID/.test(err.message) &&
+          if((INVALID_SESSION_RE.test(err.message) || INVALID_SESSION_RE.test(err.body)) &&
             self.autoRefresh === true &&
             (opts.oauth.refresh_token || (self.getUsername() && self.getPassword())) &&
             !opts._retryCount) {
