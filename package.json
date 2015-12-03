@@ -1,6 +1,6 @@
 {
   "name": "nforce-metadata",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "An nforce plugin that facilitates working with the metadata api",
   "main": "index.js",
   "scripts": {
