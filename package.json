@@ -30,7 +30,6 @@
   },
   "devDependencies": {
     "archiver": "^0.14.2",
-    "bluebird": "^2.9.7",
     "gulp": "^3.8.10",
     "gulp-jshint": "^1.9.0",
     "jshint-stylish": "^1.0.0",
