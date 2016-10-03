@@ -4,7 +4,8 @@
   "description": "An nforce plugin that facilitates working with the metadata api",
   "main": "index.js",
   "scripts": {
-    "test": "mocha"
+    "test": "mocha",
+    "preversion": "npm test"
   },
   "repository": {
     "type": "git",

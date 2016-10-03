@@ -20,7 +20,6 @@ describe('connection', function(){
 
     it('should have listMetadata function', function() {
       should.exist(conn.meta.listMetadata);
-      conn.meta.listMetadata.should.be.a.function;
     });
 
   });
