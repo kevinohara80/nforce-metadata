@@ -104,7 +104,7 @@ module.exports = function(nforce, name) {
       poller.on('error', resolver.reject);
 
       poller.start();
-    }).error(resolver.reject);
+    }).catch(resolver.reject);
 
     return resolver.promise;
   });
@@ -166,7 +166,7 @@ module.exports = function(nforce, name) {
       poller.on('error', resolver.reject);
 
       poller.start();
-    }).error(resolver.reject);
+    }).catch(resolver.reject);
 
     return resolver.promise;
   });
@@ -227,7 +227,7 @@ module.exports = function(nforce, name) {
       poller.on('error', resolver.reject);
 
       poller.start();
-    }).error(resolver.reject);
+    }).catch(resolver.reject);
 
     return resolver.promise;
   });
@@ -424,7 +424,7 @@ module.exports = function(nforce, name) {
           return resolver.resolve(res.result);
         }
       }, requestOpts );
-    }).error(function(err) {
+    }).catch(function(err) {
       resolver.reject(err);
     });
 

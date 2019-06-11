@@ -39,8 +39,8 @@
     "should": "^4.3.0"
   },
   "dependencies": {
-    "lodash": "^2.4.1",
     "bluebird": "^2.9.7",
-    "soap": "^0.9.1"
+    "lodash": "^2.4.1",
+    "soap": "^0.27.1"
   }
 }
